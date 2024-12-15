@@ -14,8 +14,12 @@ async def main():
 
 @db.message(aiogram.filters.Command(("start")))
 async def send_welcome(message: aiogram.types.Message):
-    await message.reply("Welcome bebrik")
+    await message.reply("Welcome!")
 
 
-if __name__ == "__main__":
+@db.message()
+async def echo(message: aiogram.types.Message):
+    await message.answer(message.text)
+
+def start_bot():
     asyncio.run(main())
