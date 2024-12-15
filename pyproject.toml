@@ -2,7 +2,7 @@
 name = "animegan"
 version = "0.1.0"
 description = ""
-authors = ["Maxim <max.sherb2007@gmail.com>"]
+authors = ["Maxim <max.sherb2007@gmail.com>", "Vlad <ogloblinvlad6@gmail.com>", "Andrey <Andrey7Klimin@yandex.ru>", "Andrey <paiflare@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
