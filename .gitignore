@@ -60,3 +60,7 @@ venv.bak/
 # JetBrains IDE
 .idea
 *.iml
+
+AnimeGAN/downloads/photo
+AnimeGAN/downloads/video
+AnimeGAN/downloads/video_note
