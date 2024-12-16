@@ -16,6 +16,17 @@ async def main():
 async def send_welcome(message: aiogram.types.Message):
     await message.reply("Welcome!")
 
+@db.message(aiogram.F.content_type == "photo")
+async def get_image(message: aiogram.types.Message):
+    await message.reply_photo(message.photo[-1].file_id)
+
+@db.message(aiogram.F.content_type == "video_note")
+async def get_video_note(message: aiogram.types.Message):
+    await message.reply_video_note(message.video_note.file_id)
+
+@db.message(aiogram.F.content_type == "video")
+async def get_video(message: aiogram.types.Message):
+    await message.reply_video(message.video_note.file_id)
 
 @db.message()
 async def echo(message: aiogram.types.Message):
