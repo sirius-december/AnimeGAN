@@ -16,10 +16,10 @@ async def main():
 async def send_welcome(message: aiogram.types.Message):
     await message.reply("Welcome!")
 
-
-@db.message()
-async def echo(message: aiogram.types.Message):
-    await message.answer(message.text)
+@db.message(aiogram.filters.Command(("help")))
+async def send_common_information(message: aiogram.types.Message):
+    await message.answer("Привет!\n\nТы используешь AnimeGAN бота, он создан для стилизации нетяжелых фотографий и коротких видео.\n\n\
+Всё, что тебе нужно это просто выбрать файл. Бот проверит, что он подходит по размеру и качеству, сгенерирует новое, уже стилизованное, изображение!")
 
 def start_bot():
     asyncio.run(main())
