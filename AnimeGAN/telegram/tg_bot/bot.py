@@ -46,7 +46,7 @@ async def photo_or_video_choose(message: aiogram.types.Message):
 
 
 
-@dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
+@dp.message(aiogram.F.text.lower() == "информация")
 async def send_common_information(message: aiogram.types.Message):
     kb = [
         [
