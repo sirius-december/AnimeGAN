@@ -60,3 +60,7 @@ venv.bak/
 # JetBrains IDE
 .idea
 *.iml
+
+AnimeGAN/telegram/tg_bot/photo
+AnimeGAN/telegram/tg_bot/video
+AnimeGAN/telegram/tg_bot/video_note/
