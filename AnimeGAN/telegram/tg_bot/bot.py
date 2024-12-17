@@ -65,7 +65,7 @@ async def get_video_note(message: aiogram.types.Message):
 
 @dp.message(aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message):
-    await message.reply_video(message.video_note.file_id)
+    await message.reply_video(message.video.file_id)
     file = await message.bot.get_file(message.video.file_id)
     await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
 
