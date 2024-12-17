@@ -9,5 +9,5 @@
 Build:
 `docker build -t <tag> .`\
 Run: 
-`docker run -d <tag> -e TOKEN=<token>`,
+`docker run -e TOKEN=<token> -d <tag>`,
 where tag is tag of docker image and token is telegram bot token
