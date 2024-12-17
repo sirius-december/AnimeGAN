@@ -53,21 +53,21 @@ async def get_image(message: aiogram.types.Message):
     await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
     file.thumbnail((512,512))
-    if(file.getbands()!='L'):
+    if file.getbands() != 'L':
         file = file.convert("RGB")
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
+    await bot.download_file(file.file_path, r"../AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
 
 @dp.message(aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message):
     await message.reply_video_note(message.video_note.file_id)
     file = await message.bot.get_file(message.video_note.file_id)
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/video_note/" + str(message.video_note.file_id))
+    await bot.download_file(file.file_path, r"../AnimeGAN/downloads/video_note/" + str(message.video_note.file_id))
 
 @dp.message(aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message):
     await message.reply_video(message.video_note.file_id)
     file = await message.bot.get_file(message.video.file_id)
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
+    await bot.download_file(file.file_path, r"../AnimeGAN/downloads/video/" + str(message.video.file_id))
 
 @dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
 async def send_common_information(message: aiogram.types.Message):
@@ -89,14 +89,14 @@ async def send_common_information(message: aiogram.types.Message):
 
 
 def make_dir():
-    if not os.path.exists(r"AnimeGAN/downloads/"):
-        os.mkdir("AnimeGAN/downloads")
-    if not os.path.exists(r"AnimeGAN/downloads/photo/"):
-        os.mkdir("AnimeGAN/downloads/photo/")
-    if not os.path.exists(r"AnimeGAN/downloads/video/"):
-        os.mkdir("AnimeGAN/downloads/video/")
-    if not os.path.exists(r"AnimeGAN/downloads/video_note/"):
-        os.mkdir("AnimeGAN/downloads/video_note/")
+    if not os.path.exists(r"../AnimeGAN/downloads/"):
+        os.makedirs("../AnimeGAN/downloads")
+    if not os.path.exists(r"../AnimeGAN/downloads/photo/"):
+        os.makedirs("../AnimeGAN/downloads/photo/")
+    if not os.path.exists(r"../AnimeGAN/downloads/video/"):
+        os.makedirs("../AnimeGAN/downloads/video/")
+    if not os.path.exists(r"../AnimeGAN/downloads/video_note/"):
+        os.makedirs("../AnimeGAN/downloads/video_note/")
 
 
 def start_bot():
