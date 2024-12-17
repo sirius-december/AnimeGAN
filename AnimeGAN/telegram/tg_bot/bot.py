@@ -4,6 +4,8 @@ import aiogram
 import os
 from PIL import Image
 
+from telegram.database.core import create_user_if_not_exists, decrement_videos_left
+
 dotenv.load_dotenv()
 
 bot = aiogram.Bot(os.environ["TOKEN"])
@@ -65,6 +67,14 @@ async def get_video_note(message: aiogram.types.Message):
 
 @dp.message(aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message):
+    user = create_user_if_not_exists(message.from_user.id)
+
+    if user.videos_left <= 0:
+        await message.answer('Ты израсходовал свой лимит :( Приходи позже')
+        return
+
+    decrement_videos_left(user.id)
+
     await message.reply_video(message.video.file_id)
     file = await message.bot.get_file(message.video.file_id)
     await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
