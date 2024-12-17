@@ -52,9 +52,10 @@ async def photo_or_video_choose(message: aiogram.types.Message):
 async def get_image(message: aiogram.types.Message):
     await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
-    file.thumbnail((512,512))
-    if(file.getbands()!='L'):
-        file = file.convert("RGB")
+    with Image.open(file) as img:
+        img.thumbnail((512,512))
+        if(img.getbands()!='L'):
+            img = img.convert("RGB")
     await bot.download_file(file.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
 
 @dp.message(aiogram.F.content_type == "video_note")
