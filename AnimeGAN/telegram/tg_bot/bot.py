@@ -1,21 +1,23 @@
 import asyncio
-import io
-from utils import image_check, video_check
-import dotenv
-import aiogram
-import os
-import boto3
 import logging
+import os
+
+import aiogram
+import boto3
+import dotenv
+
+from .utils import image_check, video_check
 
 from telegram.database.core import (
     create_user_if_not_exists,
     decrement_videos_left,
-    save_file,
     is_file_exists,
+    save_file,
 )
 
+
 logging.basicConfig(level=logging.INFO)
-dotenv.load_dotenv()
+dotenv.load_dotenv("./.env")
 
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
@@ -64,7 +66,7 @@ async def photo_or_video_choose(message: aiogram.types.Message):
 
 @dp.message(aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message):
-    file = await message.bot.get_file(message.video.file_id)
+    file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
         logging.info("image file is too large")
         return
@@ -74,7 +76,7 @@ async def get_image(message: aiogram.types.Message):
 
 @dp.message(aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message):
-    file = await message.bot.get_file(message.video.file_id)
+    file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
         logging.info("video_note file is too large")
         return
