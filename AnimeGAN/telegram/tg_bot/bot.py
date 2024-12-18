@@ -3,6 +3,9 @@ import dotenv
 import aiogram
 import os
 from PIL import Image
+from aiogram.fsm.state import StatesGroup, State
+from aiogram.fsm.context import FSMContext
+import common
 
 from telegram.database.core import create_user_if_not_exists, decrement_videos_left
 
@@ -11,47 +14,65 @@ dotenv.load_dotenv()
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
 
+file_fromat_names = ["Видео", "Фотография"]
+models_names = ["Первая", "Вторая"]
+
+
 async def main():
     await dp.start_polling(bot)
 
+def make_buttons_keyboard(items: list[str]):
+    row = [aiogram.types.KeyboardButton(text=item) for item in items]
+    return aiogram.types.ReplyKeyboardMarkup(keyboard=[row], resize_keyboard=True)
 
-@dp.message(aiogram.filters.Command("start"))
-async def send_welcome(message: aiogram.types.Message):
-    kb = [
-        [
-            aiogram.types.KeyboardButton(text="Информация"),
-            aiogram.types.KeyboardButton(text="Начать!")
-        ]
-    ]
-    keyboard = aiogram.types.ReplyKeyboardMarkup(
-        keyboard = kb,
-        resize_keyboard=True,
-        input_field_placeholder="Выберите как продолжить"
+
+class Form(StatesGroup):
+    choosing_format_of_file = State()
+    choosing_model = State()
+    selecting_file = State()
+
+@dp.message(aiogram.filters.StateFilter(None), aiogram.filters.Command("file"))
+async def cmd_file(message: aiogram.types.Message, state: FSMContext):
+    await message.answer(
+        text="Выберите, что хотите стилизовать",
+        reply_markup=make_buttons_keyboard(file_fromat_names)
     )
-    await message.answer("Добро пожаловать в AnimeGan!", reply_markup=keyboard)
+    await state.set_state(Form.choosing_format_of_file)
 
 
-
-@dp.message(aiogram.F.text.lower() == "начать!")
-async def photo_or_video_choose(message: aiogram.types.Message):
-    kb = [
-        [
-            aiogram.types.KeyboardButton(text="Фотография"),
-            aiogram.types.KeyboardButton(text="Видео")
-        ]
-    ]
-    keyboard = aiogram.types.ReplyKeyboardMarkup(
-        keyboard=kb,
-        resize_keyboard=True,
-        input_field_placeholder="Что будем стилизовать?"
+@dp.message(Form.choosing_format_of_file, aiogram.F.text.in_(file_fromat_names))
+async def format_chosen(message: aiogram.types.Message, state: FSMContext):
+    await message.answer(
+        text="Выберите какой моделью хотите воспользоваться",
+        reply_markup=make_buttons_keyboard(models_names)
     )
-    await message.answer("Для начала выберите, что будем стилизовать", reply_markup=keyboard)
+    await state.set_state(Form.choosing_model)
 
+@dp.message(Form.choosing_format_of_file)
+async def format_incorrect(message: aiogram.types.Message):
+    await message.answer(
+        text="Выберите пожалуйста формат из предложенного списка",
+        reply_markup=make_buttons_keyboard(file_fromat_names)
+    )
 
+@dp.message(Form.choosing_model, aiogram.F.text.in_(models_names))
+async def model_chosen(message: aiogram.types.Message, state: FSMContext):
+    user_data = await state.get_data()
+    await message.answer(
+        text=f"Вы выбрали обработать моделью {message.text}",
+        reply_markup=aiogram.types.ReplyKeyboardRemove()
+    )
+    await state.set_state(Form.selecting_file)
 
+@dp.message(Form.choosing_model)
+async def model_chosen_incorrect(message: aiogram.types.Message):
+    await message.answer(
+        text="У нас нет такой модели, выберите пожалуйста модель из предложенного списка:",
+        reply_markup=make_buttons_keyboard(models_names)
+    )
 
 @dp.message(aiogram.F.content_type == "photo")
-async def get_image(message: aiogram.types.Message):
+async def get_image(message: aiogram.types.Message, state : FSMContext):
     await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
     with Image.open(file) as img:
@@ -79,24 +100,6 @@ async def get_video(message: aiogram.types.Message):
     await message.reply_video(message.video.file_id)
     file = await message.bot.get_file(message.video.file_id)
     await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
-
-@dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
-async def send_common_information(message: aiogram.types.Message):
-    kb = [
-        [
-            aiogram.types.KeyboardButton(text="Как это работает?"),
-            aiogram.types.KeyboardButton(text="Начать!")
-        ]
-    ]
-    keyboard = aiogram.types.ReplyKeyboardMarkup(
-        keyboard=kb,
-        resize_keyboard=True,
-        input_field_placeholder="Как продолжим?"
-    )
-    await message.answer("Привет!\n\nТы используешь AnimeGAN бота, он создан для стилизации нетяжелых фотографий и коротких видео.\n\n\
-Всё, что тебе нужно это просто выбрать файл. Бот проверит, что он подходит по размеру и качеству, сгенерирует новое, уже стилизованное, изображение!",\
-        reply_markup=keyboard)
-
 
 
 def make_dir():
