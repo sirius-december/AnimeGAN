@@ -89,12 +89,10 @@ async def get_video(message: aiogram.types.Message):
     unique_id = message.video.file_unique_id
 
     if not is_file_exists(unique_id):
-        file_entity = save_file(unique_id, user.id)
+        save_file(unique_id, user.id)
         binary: io.BytesIO = await bot.download_file(file.file_path)
 
         s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
-
-        await message.answer('File saved with id ' + file_entity.id)
 
 @dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
 async def send_common_information(message: aiogram.types.Message):
