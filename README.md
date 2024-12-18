@@ -7,9 +7,15 @@
 ### Usage
 
 Build:
-`docker build -t <tag> .`\
-Run: 
-`docker run -e TOKEN=<token> -e DATABASE_URL=<database_url> -d <tag>`,
-where `tag` is tag of docker image, `token` is telegram bot token, `database_url` is postgres url in form `postgresql://<user>:<password>@<host>:<port>/<database>`
+`docker build -t <tag> .`, where `tag` is desired tag of docker image\
+Run:`docker run -e env1=<env1> -e env2=<env2> -e ... -d <tag>`\
+Or via .env file: `docker run --env-file <file_name> -d <tag>`
 
-Or you can use .env file: `docker run --env-file <file_name> -d <tag>`, and file contains `TOKEN` and `DATABASE_URL`
+
+Required Env variables:\
+- `TOKEN` – telegram bot token
+- `DATABASE_URL` – url to connect to postgres database. Should be in form `postgresql://<user>:<password>@<host>:<port>/<database>`
+- `AWS_ACCESS_KEY_ID` – AWS access key ID
+- `AWS_SECRET_ACCESS_KEY` – AWS secret access key
+- `AWS_DEFAULT_REGION` – AWS region
+- `AWS_ENDPOINT_URL` – AWS endpoint URL
