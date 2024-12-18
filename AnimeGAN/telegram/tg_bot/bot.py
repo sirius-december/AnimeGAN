@@ -11,6 +11,11 @@ dotenv.load_dotenv()
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
 
+def imagecheck(img):
+    image = Image.open(io.BytesIO(img))
+    if max(image.size())<=1024:
+        return True
+    return False
 async def main():
     await dp.start_polling(bot)
 
@@ -53,10 +58,7 @@ async def photo_or_video_choose(message: aiogram.types.Message):
 async def get_image(message: aiogram.types.Message):
     await message.reply_photo(message.photo[-1].file_id)
     img_data = await message.bot.get_file(message.photo[-1].file_id)
-    
-    image = Image.open(io.BytesIO(img_data))
-    image = image.thumbnail((512, 512))
-    
+    imagecheck(img_data)
     await bot.download_file(image.file_path,r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id) + ".jpg")
 
 '''@dp.message(aiogram.F.content_type == "photo")
