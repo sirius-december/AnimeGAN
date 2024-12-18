@@ -33,3 +33,26 @@ def decrement_videos_left(user_id: int) -> None:
         user = session.query(User).where(User.id == user_id).scalar()
         user.videos_left -= 1
         session.commit()
+
+
+def is_file_exists(file_id: str) -> bool:
+    with Session(engine) as session:
+        return session.query(File).where(File.id == file_id).scalar() is not None
+
+
+def get_file_by_id(file_id: str) -> File:
+    with Session(engine) as session:
+        return session.query(File).where(File.id == file_id).scalar()
+
+
+def save_file(file_id: str, user_id: int) -> File:
+    file = get_file_by_id(file_id)
+    if file is not None:
+        return file
+
+    with Session(engine) as session:
+        file = File(id=file_id, user_id=user_id)
+        session.add(file)
+        session.commit()
+
+        return session.query(File).where(File.id == file_id).scalar()
