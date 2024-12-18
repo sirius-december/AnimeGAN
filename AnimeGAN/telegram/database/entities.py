@@ -17,9 +17,10 @@ class User(Base):
     videos_left: Mapped[int] = mapped_column(nullable=False, default=5)
     photos_left: Mapped[int] = mapped_column(nullable=False, default=5)
 
+
 class File(Base):
     __tablename__ = 'files'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[str] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.datetime.utcnow())

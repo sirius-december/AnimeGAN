@@ -1,15 +1,22 @@
 import asyncio
+import io
+
 import dotenv
 import aiogram
 import os
 from PIL import Image
+import boto3
 
-from telegram.database.core import create_user_if_not_exists, decrement_videos_left
+from telegram.database.core import create_user_if_not_exists, decrement_videos_left, save_file, is_file_exists
 
 dotenv.load_dotenv()
 
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
+
+s3 = boto3.client('s3')
+BUCKET_NAME = 'animegan-s3'
+
 
 async def main():
     await dp.start_polling(bot)
@@ -78,7 +85,16 @@ async def get_video(message: aiogram.types.Message):
 
     await message.reply_video(message.video.file_id)
     file = await message.bot.get_file(message.video.file_id)
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
+
+    unique_id = message.video.file_unique_id
+
+    if not is_file_exists(unique_id):
+        file_entity = save_file(unique_id, user.id)
+        binary: io.BytesIO = await bot.download_file(file.file_path)
+
+        s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+
+        await message.answer('File saved with id ' + file_entity.id)
 
 @dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
 async def send_common_information(message: aiogram.types.Message):
