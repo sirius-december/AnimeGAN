@@ -1,8 +1,9 @@
-import cv2
-from PIL import Image
-import aiogram
 import io
 import os
+
+import aiogram
+import cv2
+from PIL import Image
 
 
 def crop_video(input_path, output_path):
@@ -29,7 +30,7 @@ def crop_video(input_path, output_path):
 
 
 def video_check(data: aiogram.types.File):
-    if data.file_size <= 11 * 1024 * 1024:
+    if data.file_size <= 5 * 1024 * 1024:
         return True
     return False
 
@@ -50,7 +51,7 @@ def video_check(data: aiogram.types.File):
 
 
 def image_check(data: aiogram.types.File):
-    if data.file_size <= 11 * 1024 * 1024:
+    if data.file_size <= 2 * 1024 * 1024:
         return True
     return False
 
