@@ -16,7 +16,7 @@ def crop_video(input_path, output_path):
         if not ret:
             break
 
-        frame = cv2.thumbnail(frame, (width, height))
+        frame = frame.thumbnail((width, height))
         out.write(frame)
         frame_count += 1
 
