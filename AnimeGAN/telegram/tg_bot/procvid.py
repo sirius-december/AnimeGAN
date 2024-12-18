@@ -8,7 +8,7 @@ def crop_video(input_path, output_path):
     height = 512
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
-    out = cv2.VideoWriter(output_path, fourcc, fps)
+    out = cv2.VideoWriter(output_path, fourcc, fps,(512, 512))
 
     frame_count = 0
     while cap.isOpened() and frame_count < fps * 10:
@@ -16,7 +16,7 @@ def crop_video(input_path, output_path):
         if not ret:
             break
 
-        frame = cv2.thumbnail(frame, (width, height))
+        frame = frame.thumbnail((width, height))
         out.write(frame)
         frame_count += 1
 
