@@ -6,7 +6,6 @@ import os
 from PIL import Image
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
-import common
 
 from telegram.database.core import create_user_if_not_exists, decrement_videos_left
 
