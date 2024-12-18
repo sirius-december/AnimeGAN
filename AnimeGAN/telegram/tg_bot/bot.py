@@ -56,7 +56,7 @@ async def get_image(message: aiogram.types.Message):
         img.thumbnail((512,512))
         if(img.getbands()!='L'):
             img = img.convert("RGB")
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
+        await bot.download_file(img.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
 
 @dp.message(aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message):
