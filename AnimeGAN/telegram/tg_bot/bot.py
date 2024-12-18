@@ -2,7 +2,9 @@ import asyncio
 import dotenv
 import aiogram
 import os
+import cv2
 from PIL import Image
+import io
 
 dotenv.load_dotenv()
 
@@ -47,16 +49,23 @@ async def photo_or_video_choose(message: aiogram.types.Message):
 
 
 
-
 @dp.message(aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message):
     await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
-    with Image.open(file) as img:
-        img.thumbnail((512,512))
-        if(img.getbands()!='L'):
-            img = img.convert("RGB")
-        await bot.download_file(img.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
+    
+    img_data = await bot.download_file(file.file_path)
+    
+    image = Image.open(io.BytesIO(img_data))
+    image = image.thumbnail((512, 512))
+    
+    image.save(r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id) + ".jpg")
+
+'''@dp.message(aiogram.F.content_type == "photo")
+async def get_image(message: aiogram.types.Message):
+    await message.reply_photo(message.photo[-1].file_id)
+    file = await message.bot.get_file(message.photo[-1].file_id)
+    await bot.download_file(file.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))'''
 
 @dp.message(aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message):
