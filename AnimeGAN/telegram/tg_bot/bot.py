@@ -1,8 +1,13 @@
 import asyncio
+from io import BytesIO
+
 import aiogram.filters
+import cv2
 import dotenv
 import aiogram
 import os
+
+import numpy as np
 from PIL import Image
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
@@ -10,6 +15,8 @@ import logging
 import boto3
 import dotenv
 import io
+
+from aiogram.types import BufferedInputFile
 
 from .utils import image_check, video_check
 
@@ -19,7 +26,7 @@ from telegram.database.core import (
     is_file_exists,
     save_file,
 )
-
+from ..datasphere.Model import Model
 
 logging.basicConfig(level=logging.INFO)
 dotenv.load_dotenv()
@@ -34,6 +41,7 @@ model_names = ["Hayao", "Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
+model = Model("bt1soaafjmhtf1f2j6ko", "b1gbnhth47rchbtmstlr", "bt16jq41r6uelhtvm018", 512)
 
 
 async def main():
@@ -153,13 +161,21 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
 
 @dp.message(aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message, state : FSMContext):
-    await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
         logging.info("image file is too large")
         return
 
     # <TODO> аналогично как в get_video
+
+    binary: io.BytesIO = await bot.download_file(file.file_path)
+    img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
+
+    img = model.process(img)
+
+    img_encoded = cv2.imencode('.jpg', img)[1]
+    send_file = BufferedInputFile(img_encoded, filename='img.jpg')
+    await message.reply_photo(send_file)
 
 
 @dp.message(aiogram.F.content_type == "video_note")
