@@ -8,6 +8,9 @@
 
 Build:
 `docker build -t <tag> .`, where `tag` is desired tag of docker image\
+
+While building there should be file folder keys in root directory and file `keys/datasphere-key.json` with keys from service account which has access to Datasphere.
+
 Run:`docker run -e env1=<env1> -e env2=<env2> -e ... -d <tag>`\
 Or via .env file: `docker run --env-file <file_name> -d <tag>`
 
