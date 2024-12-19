@@ -56,6 +56,11 @@ async def cmd_cancel(message: aiogram.types.Message, state: FSMContext):
         
     )
 
+
+#INFO_OR_FILE
+# @dp.message(Form.choosing_info_or_file, aiogram.F.text.in_(info_or_file))
+# async def info_or_file_chooser(mess)
+
 #INFO
 @dp.message(Form.choosing_info_or_file, aiogram.F.text==info_or_file[0])
 async def file_chooser(message: aiogram.types.Message, state: FSMContext):
