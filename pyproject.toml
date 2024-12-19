@@ -15,6 +15,10 @@ tqdm = "^4.67.1"
 sqlalchemy = "^2.0.36"
 psycopg2-binary = "^2.9.10"
 boto3 = "^1.35.83"
+numpy = "<2"
+tritonclient = {extras = ["http"], version = "^2.52.0"}
+pyjwt = "^2.10.1"
+cryptography = "^44.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
