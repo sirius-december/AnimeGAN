@@ -6,10 +6,25 @@ import os
 from PIL import Image
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+import logging
+import os
 
-from telegram.database.core import create_user_if_not_exists, decrement_videos_left
+import aiogram
+import boto3
+import dotenv
 
-dotenv.load_dotenv()
+from .utils import image_check, video_check
+
+from telegram.database.core import (
+    create_user_if_not_exists,
+    decrement_videos_left,
+    is_file_exists,
+    save_file,
+)
+
+
+logging.basicConfig(level=logging.INFO)
+dotenv.load_dotenv("./.env")
 
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
@@ -19,6 +34,8 @@ info_or_file = ["Больше информации", "Выбрать файл"]
 file_fromat_names = ["Фотография", "Видео"]
 models_names_for_photo = ["Первая", "Вторая"]
 models_names_for_video = ["Первая", "Вторая"]
+s3 = boto3.client("s3")
+BUCKET_NAME = "animegan-s3"
 
 
 async def main():
@@ -150,44 +167,66 @@ async def model_for_video_chosen_incorrect(message: aiogram.types.Message):
 async def get_image(message: aiogram.types.Message, state : FSMContext):
     await message.reply_photo(message.photo[-1].file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
-    with Image.open(file) as img:
-        img.thumbnail((512,512))
-        if(img.getbands()!='L'):
-            img = img.convert("RGB")
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/photo/" + str(message.photo[-1].file_id))
+    if not image_check(file):
+        logging.info("image file is too large")
+        return
+
+    # <TODO> аналогично как в get_video
+
 
 @dp.message(aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message):
-    await message.reply_video_note(message.video_note.file_id)
     file = await message.bot.get_file(message.video_note.file_id)
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/video_note/" + str(message.video_note.file_id))
+    if not video_check(file):
+        logging.info("video_note file is too large")
+        return
+
+    # <TODO> аналогично как в get_video
+
 
 @dp.message(aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message):
-    user = create_user_if_not_exists(message.from_user.id)
+    file = await message.bot.get_file(message.video.file_id)
+    if not video_check(file):
+        logging.info("video file is too large")
+        return
 
+    user = create_user_if_not_exists(message.from_user.id)
+    # <TODO> где-то здесь (или внутри функции выше) должна быть логика обновления лимитов для юзера
+    # условно его лимиты действуют в течение суток и с каждым днем они должны обновляться
     if user.videos_left <= 0:
-        await message.answer('Ты израсходовал свой лимит :( Приходи позже')
+        await message.answer("Ты израсходовал свой лимит :( Приходи позже")
         return
 
     decrement_videos_left(user.id)
 
-    await message.reply_video(message.video.file_id)
-    file = await message.bot.get_file(message.video.file_id)
-    await bot.download_file(file.file_path, r"AnimeGAN/downloads/video/" + str(message.video.file_id))
+    unique_id = message.video.file_unique_id
+    if not is_file_exists(unique_id):
+        save_file(unique_id, user.id)
+        binary: io.BytesIO = await bot.download_file(file.file_path)
+
+        s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+
+    # <TODO> отправить в ноду для обработки, сохранить обработанный файл в s3, вернуть пользователю ответом обработанный файл
 
 
-def make_dir():
-    if not os.path.exists(r"AnimeGAN/downloads/"):
-        os.mkdir("AnimeGAN/downloads")
-    if not os.path.exists(r"AnimeGAN/downloads/photo/"):
-        os.mkdir("AnimeGAN/downloads/photo/")
-    if not os.path.exists(r"AnimeGAN/downloads/video/"):
-        os.mkdir("AnimeGAN/downloads/video/")
-    if not os.path.exists(r"AnimeGAN/downloads/video_note/"):
-        os.mkdir("AnimeGAN/downloads/video_note/")
+@dp.message(aiogram.F.text.lower() == "информация" or aiogram.types.Command("help"))
+async def send_common_information(message: aiogram.types.Message):
+    kb = [
+        [
+            aiogram.types.KeyboardButton(text="Как это работает?"),
+            aiogram.types.KeyboardButton(text="Начать!"),
+        ]
+    ]
+    keyboard = aiogram.types.ReplyKeyboardMarkup(
+        keyboard=kb, resize_keyboard=True, input_field_placeholder="Как продолжим?"
+    )
+    await message.answer(
+        "Привет!\n\nТы используешь AnimeGAN бота, он создан для стилизации нетяжелых фотографий и коротких видео.\n\n\
+Всё, что тебе нужно это просто выбрать файл. Бот проверит, что он подходит по размеру и качеству, сгенерирует новое, уже стилизованное, изображение!",
+        reply_markup=keyboard,
+    )
 
 
 def start_bot():
-    make_dir()
     asyncio.run(main())
