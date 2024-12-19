@@ -30,7 +30,7 @@ dp = aiogram.Dispatcher()
 
 info_or_file = ["Больше информации", "Выбрать файл"]
 file_fromat_names = ["Фотография", "Видео"]
-model_names = ["Hayao", "Arcane", "Sinkai"]
+model_names = ["Hayao", "Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
