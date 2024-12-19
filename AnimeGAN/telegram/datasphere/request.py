@@ -15,11 +15,6 @@ def make_request(node_id: str, folder_id: str, model_id: str, model_input):
         "x-folder-id": f"{folder_id}"
     }
 
-    print(f"""model_name: {model_id},
-    model_ready: {triton_client.is_model_ready(model_name=model_id, headers=headers)},
-    model_config: {triton_client.get_model_config(model_name=model_id, headers=headers)}
-    """)
-
     input_shape = model_input.shape
     payload = httpclient.InferInput("input_variable_0", input_shape, "FP32")
 
