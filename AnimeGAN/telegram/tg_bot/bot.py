@@ -173,8 +173,6 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 
     img = model.process(img)
 
-    img = np.uint8(img * 256)
-
     img_encoded = cv2.imencode('.jpg', img)[1]
     send_file = BufferedInputFile(img_encoded, filename='img.jpg')
     await message.reply_photo(send_file)

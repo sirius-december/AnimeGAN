@@ -71,4 +71,6 @@ class Model:
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
+        image = np.uint8(image * 256)
+
         return image
