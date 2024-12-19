@@ -56,6 +56,7 @@ class Form(StatesGroup):
     choosing_format_of_file = State()
     choosing_model = State()
     selecting_file = State()
+    file_selecting = State()
     choosing_info_or_file = State()
 
 
@@ -105,6 +106,7 @@ async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMConte
     )
 
 
+
 #FILE CHOSEN CORRECT
 @dp.message(aiogram.F.text.in_(file_fromat_names))
 async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext):
@@ -112,13 +114,10 @@ async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext)
     # TODO: Проверить, что файл нужного формата и отредактировать его
     text=""
     if message.text==file_fromat_names[0]:
-        text="Вы выбрали стилизовать фото, выберите какой моделью хотите воспользоваться"
+        text="фото"
     else:
-        text="Вы выбрали стилизовать видео, выберите какой моделью хотите воспользоваться"
-    await message.answer(
-        text=text,
-        reply_markup=make_buttons_keyboard(model_names)
-    )
+        text="Видео"
+    await message.answer(text=f"Вы выбрали стилизовать {text}, какой моделью хотите стилизовать")
     await state.set_state(Form.choosing_model)
 
 
@@ -131,23 +130,15 @@ async def format_incorrect(message: aiogram.types.Message):
     )
 
 
-
 #MODEL
 @dp.message(Form.choosing_model, aiogram.F.text.in_(model_names))
 async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMContext):
-    # <TODO> : Надо пронести файл по всем переходам между state
     for model in model_names:
         if message.text == model:
-            await message.answer(text=f"Вы выбрали модель {model}, идет обработка")
+            await message.answer(text=f"Вы выбрали модель {model}, теперь прикрепите файл")
             print(state.get_state)
             break
-    # <TODO> : Отправить файл на обработку и сохранить новое 
-    await message.answer(
-        text="Вот что у нас получилось",
-        reply_markup=make_buttons_keyboard(file_fromat_names)
-    )
-    await state.set_state(Form.choosing_format_of_file)
-    
+    await state.set_state(Form.selecting_file)
 
 
 #MODEL_INCORRET
@@ -158,8 +149,8 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
         reply_markup=make_buttons_keyboard(model_names)
     )
 
-
-@dp.message(aiogram.F.content_type == "photo")
+#SELECTING PHOTO
+@dp.message(Form.selecting_file, aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message, state : FSMContext):
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
@@ -176,20 +167,23 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     img_encoded = cv2.imencode('.jpg', img)[1]
     send_file = BufferedInputFile(img_encoded, filename='img.jpg')
     await message.reply_photo(send_file)
+    await state.set_state(Form.choosing_info_or_file)
 
-
-@dp.message(aiogram.F.content_type == "video_note")
-async def get_video_note(message: aiogram.types.Message):
+#SELECTING VIDEO_NOTE
+@dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
+async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
         logging.info("video_note file is too large")
         return
 
+    await state.set_state(Form.choosing_info_or_file)
     # <TODO> аналогично как в get_video
 
 
-@dp.message(aiogram.F.content_type == "video")
-async def get_video(message: aiogram.types.Message):
+#SELECTING VIDEO
+@dp.message(Form.selecting_file, aiogram.F.content_type == "video")
+async def get_video(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
         logging.info("video file is too large")
@@ -212,7 +206,7 @@ async def get_video(message: aiogram.types.Message):
         s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
     # <TODO> отправить в ноду для обработки, сохранить обработанный файл в s3, вернуть пользователю ответом обработанный файл
-
+    await state.set_state(Form.choosing_info_or_file)
 
 
 def start_bot():
