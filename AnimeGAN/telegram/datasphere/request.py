@@ -4,8 +4,6 @@ import numpy as np
 
 triton_client = httpclient.InferenceServerClient(url='node-api.datasphere.yandexcloud.net', ssl=True)
 
-BATCH_SIZE = 1
-
 def make_request(node_id: str, folder_id: str, model_id: str, model_input):
     iam_token = get_iam_token(generate_jwt())
     print(iam_token)
