@@ -39,6 +39,8 @@ class Model:
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
         image = image.astype(np.float32)
 
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         w = image.shape[1]
         h = image.shape[0]
 
@@ -66,5 +68,7 @@ class Model:
         elif ratio < 1:
             new_height = int(self.img_size * ratio)
             image = image[0 : new_height, 0 : self.img_size]
+
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         return image
