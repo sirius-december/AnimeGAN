@@ -171,7 +171,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     binary: io.BytesIO = await bot.download_file(file.file_path)
     img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
 
-    img = model.process(img)
+    img = model.process_image(img)
 
     img_encoded = cv2.imencode('.jpg', img)[1]
     send_file = BufferedInputFile(img_encoded, filename='img.jpg')
@@ -213,7 +213,13 @@ async def get_video(message: aiogram.types.Message):
 
     # <TODO> отправить в ноду для обработки, сохранить обработанный файл в s3, вернуть пользователю ответом обработанный файл
 
+    url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
+    video_capture = cv2.VideoCapture(url)
 
+    video = model.process_video(video_capture)
+    video.seek(0)
+    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
+    await message.reply_video(send_file)
 
 def start_bot():
     asyncio.run(main())

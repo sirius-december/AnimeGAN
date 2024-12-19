@@ -1,3 +1,6 @@
+import io
+
+import av
 import numpy as np
 import cv2
 
@@ -16,7 +19,7 @@ class Model:
         self.model_id = model_id
         self.img_size = img_size
 
-    def process(self, image: np.ndarray) -> np.ndarray:
+    def process_image(self, image: np.ndarray) -> np.ndarray:
         shape = image.shape
         image = self.preprocess_image(image)
 
@@ -60,17 +63,73 @@ class Model:
     def postprocess_image(self, image: np.ndarray, initial_shape: tuple) -> np.ndarray:
         image = (image + 1.0) / 2.0
 
-        ratio = initial_shape[0] / initial_shape[1]
+        new_height, new_width = self.get_result_size(initial_shape[0], initial_shape[1])
 
-        if ratio > 1:
-            new_width = int(self.img_size / ratio)
-            image = image[0 : self.img_size, 0 : new_width]
-        elif ratio < 1:
-            new_height = int(self.img_size * ratio)
-            image = image[0 : new_height, 0 : self.img_size]
+        image = image[0 : new_height, 0 : new_width]
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
         image = np.uint8(image * 256)
 
         return image
+
+    def process_video(self, capture: cv2.VideoCapture) -> io.BytesIO:
+        frames: list[np.ndarray] = []
+        fps = capture.get(cv2.CAP_PROP_FPS)
+        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+        new_height, new_width = self.get_result_size(height, width)
+
+        while True:
+            ret, frame = capture.read()
+
+            if not ret:
+                break
+
+            frames.append(self.preprocess_image(frame))
+
+        capture.release()
+
+        frames_nd = np.array(frames)
+        frames_nd = make_request(
+            node_id=self.node_id,
+            folder_id=self.folder_id,
+            model_id=self.model_id,
+            model_input=frames_nd
+        )
+
+        frames_out: list[np.ndarray] = []
+
+        for frame in frames_nd:
+            frames_out.append(self.postprocess_image(frame, (height, width)))
+
+        output_file = io.BytesIO()
+        output = av.open(output_file, 'w', format='mp4')
+        stream = output.add_stream('h264', int(fps))
+        stream.height = new_height
+        stream.width = new_width
+
+        for frame in frames_out:
+            av_frame = av.VideoFrame.from_ndarray(frame, format='bgr24')
+            packet = stream.encode(av_frame)
+            output.mux(packet)
+
+        packet = stream.encode(None)
+        output.mux(packet)
+
+        output.close()
+
+        return output_file
+
+    def get_result_size(self, height: int, width: int) -> (int, int):
+        ratio = height / width
+
+        if ratio > 1:
+            return self.img_size, int(self.img_size / ratio)
+
+        elif ratio < 1:
+            return int(self.img_size * ratio), self.img_size
+
+        else:
+            return self.img_size, self.img_size
