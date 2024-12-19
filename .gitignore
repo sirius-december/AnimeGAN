@@ -67,3 +67,6 @@ AnimeGAN/downloads/video_note
 
 # MacOS
 .DS_Store
+
+# IAM keys
+keys/
