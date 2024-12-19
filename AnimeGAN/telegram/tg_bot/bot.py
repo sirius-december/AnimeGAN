@@ -71,8 +71,10 @@ async def cmd_start(message: aiogram.types.Message, state: FSMContext):
 @dp.message(aiogram.filters.Command("cancel"))
 async def cmd_cancel(message: aiogram.types.Message, state: FSMContext):
     await message.answer(
-        
+        text="Отменили ваш выбор",
+        reply_markup=make_buttons_keyboard(info_or_file)
     )
+    await state.set_state(Form.choosing_info_or_file)
 
 
 #INFO_OR_FILE
