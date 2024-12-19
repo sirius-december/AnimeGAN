@@ -30,15 +30,11 @@ dp = aiogram.Dispatcher()
 
 info_or_file = ["Больше информации", "Выбрать файл"]
 file_fromat_names = ["Фотография", "Видео"]
-models_names_for_photo = ["Фото1", "Фото2"]
-models_names_for_video = ["Видео1", "Видео2"]
-all_models = models_names_for_photo+models_names_for_video
+model_names = ["Hayao", "Arcane", "Sinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
 
-
-print(all_models)
 
 async def main():
     await dp.start_polling(bot)
@@ -50,8 +46,7 @@ def make_buttons_keyboard(items: list[str]):
 
 class Form(StatesGroup):
     choosing_format_of_file = State()
-    choosing_model_for_photo = State()
-    choosing_model_for_video = State()
+    choosing_model = State()
     selecting_file = State()
     choosing_info_or_file = State()
 
@@ -106,23 +101,20 @@ async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMConte
 @dp.message(Form.choosing_format_of_file, aiogram.F.text.in_(file_fromat_names))
 async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext):
     # TODO: Дать прикрепить файл
+    # TODO: Проверить, что файл нужного формата и отредактировать его
+    text=""
     if message.text==file_fromat_names[0]:
-        # TODO: Проверить, что файл нужного формата и отредактировать его
-        await message.answer(
-            text="Вы выбрали стилизовать фото, выберите какой моделью хотите воспользоваться",
-            reply_markup=make_buttons_keyboard(models_names_for_photo)
-        )
-        await state.set_state(Form.choosing_model_for_photo)
+        text="Вы выбрали стилизовать фото, выберите какой моделью хотите воспользоваться"
     else:
-        # TODO: Проверить, что файл нужного формата и отредактировать его
-        await message.answer(
-            text="Вы выбрали стилизовать видео, выберите какой моделью хотите воспользоваться",
-            reply_markup=make_buttons_keyboard(models_names_for_video)
-        )
-        await state.set_state(Form.choosing_model_for_video)
+        text="Вы выбрали стилизовать видео, выберите какой моделью хотите воспользоваться"
+    await message.answer(
+        text=text,
+        reply_markup=make_buttons_keyboard(model_names)
+    )
+    await state.set_state(Form.choosing_model)
 
 
-#FILE Inccorect
+#FILE INCORRECT
 @dp.message(Form.choosing_format_of_file)
 async def format_incorrect(message: aiogram.types.Message):
     await message.answer(
@@ -131,16 +123,17 @@ async def format_incorrect(message: aiogram.types.Message):
     )
 
 
-#MODEL_FOR_PHOTO
-@dp.message(Form.choosing_model_for_photo, aiogram.F.text.in_(models_names_for_photo))
+
+#MODEL
+@dp.message(Form.choosing_model, aiogram.F.text.in_(model_names))
 async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMContext):
     # <TODO> : Надо пронести файл по всем переходам между state
-    for model in models_names_for_photo:
+    for model in model_names:
         if message.text == model:
             await message.answer(text=f"Вы выбрали модель {model}, идет обработка")
             print(state.get_state)
             break
-    # <TODO> : Отправить фото на обработку и сохранить новое 
+    # <TODO> : Отправить файл на обработку и сохранить новое 
     await message.answer(
         text="Вот что у нас получилось",
         reply_markup=make_buttons_keyboard(file_fromat_names)
@@ -149,34 +142,12 @@ async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMCon
     
 
 
-#MODEL_FOR_VIDEO
-@dp.message(Form.choosing_model_for_video, aiogram.F.text.in_(models_names_for_video))
-async def choosing_model_for_video(message: aiogram.types.Message, state: FSMContext):
-    for model in models_names_for_video:
-        if message.text == model:
-            await message.answer(text=f"Вы выбрали модель {model}, идет обработка")
-            break
-    # <TODO> : Отправить видео на обработку и сохранить новое
-    await message.answer(
-        text="Вот что у нас получилось",
-        reply_markup=make_buttons_keyboard(file_fromat_names)
-    )
-    await state.set_state(Form.choosing_format_of_file)
-
-#MODEL_PHOTO_INCORRET
-@dp.message(Form.choosing_model_for_photo)
+#MODEL_INCORRET
+@dp.message(Form.choosing_model)
 async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
     await message.answer(
-        text="У нас нет такой модели для фотографий, выберите пожалуйста модель из предложенного списка:",
-        reply_markup=make_buttons_keyboard(models_names_for_photo)
-    )
-
-#MODEL_VIDEO_INCORRET
-@dp.message(Form.choosing_model_for_video)
-async def model_for_video_chosen_incorrect(message: aiogram.types.Message):
-    await message.answer(
-        text="У нас нет такой модели для видео, выберите пожалуйста модель из предложенного списка:",
-        reply_markup=make_buttons_keyboard(models_names_for_video)
+        text="У нас нет такой модели, выберите пожалуйста модель из предложенного списка:",
+        reply_markup=make_buttons_keyboard(model_names)
     )
 
 
