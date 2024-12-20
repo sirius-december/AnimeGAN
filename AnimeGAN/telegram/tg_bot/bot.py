@@ -116,6 +116,7 @@ async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMConte
 #FILE CHOSEN CORRECT
 @dp.message(aiogram.F.text.in_(file_fromat_names))
 async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext):
+    await state.update_data(chosen_format_of_file=message.text.lower())
     text=""
     if message.text==file_fromat_names[0]:
         text="фото"
@@ -140,10 +141,15 @@ async def format_incorrect(message: aiogram.types.Message):
 #MODEL
 @dp.message(Form.choosing_model, aiogram.F.text.in_(model_names))
 async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMContext):
+    await state.update_data(chosen_model=message.text.lower())
+    user_data = await state.get_data()
+    print(user_data['chosen_model'])
     for model in model_names:
         if message.text == model:
-            await message.answer(text=f"Вы выбрали модель {model}, теперь прикрепите файл")
-            print(state.get_state)
+            await message.answer(
+                text=f"Вы выбрали модель {model}, теперь прикрепите файл",
+                reply_markup=aiogram.types.ReplyKeyboardRemove()
+            )
             break
     await state.set_state(Form.selecting_file)
 
@@ -156,9 +162,19 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
         reply_markup=make_buttons_keyboard(model_names)
     )
 
+#SELECTING PHOTO_VIDEO_NOTE INCORRECT
+@dp.message(Form.selecting_file)
+async def incorrect_selecting_file(message: aiogram.types.Message):
+    await message.answer(
+        text="Пожалуйста прикрепите файл нажав на иконку скрепки и отправьте его в чат",
+        reply_markup=aiogram.types.ReplyKeyboardRemove()
+    )
+
+
 #SELECTING PHOTO
 @dp.message(Form.selecting_file, aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message, state : FSMContext):
+    await state.update_data(file=message.animation.file_id)
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
         logging.info("image file is too large")
@@ -200,11 +216,13 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     save_file(unique_id, user.id)
 
     await message.reply_photo(send_file)
+    await state.clear()
     await state.set_state(Form.choosing_info_or_file)
 
 #SELECTING VIDEO_NOTE
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message, state: FSMContext):
+    await state.update_data(file=message.animation.file_id)
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
         logging.info("video_note file is too large")
@@ -247,12 +265,14 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     save_file(unique_id, user.id)
 
     await message.reply_video(send_file)
+    await state.clear()
     await state.set_state(Form.choosing_info_or_file)
 
 
 #SELECTING VIDEO
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message, state: FSMContext):
+    await state.update_data(file=message.animation.file_id)
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
         logging.info("video file is too large")
@@ -294,6 +314,7 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     save_file(unique_id, user.id)
 
     await message.reply_video(send_file)
+    await state.clear()
     await state.set_state(Form.choosing_info_or_file)
 
 
