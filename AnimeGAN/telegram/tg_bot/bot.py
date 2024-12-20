@@ -24,7 +24,7 @@ from telegram.database.core import (
     create_user_if_not_exists,
     decrement_videos_left,
     is_file_exists,
-    save_file,
+    save_file, update_user_limits, decrement_photos_left,
 )
 from ..datasphere.Model import Model
 
@@ -34,18 +34,27 @@ dotenv.load_dotenv()
 bot = aiogram.Bot(os.environ["TOKEN"])
 dp = aiogram.Dispatcher()
 
-
 info_or_file = ["Больше информации", "Выбрать файл"]
 file_fromat_names = ["Фотография", "Видео"]
 model_names = ["Hayao", "Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
-model = Model("bt1soaafjmhtf1f2j6ko", "b1gbnhth47rchbtmstlr", "bt16jq41r6uelhtvm018", 512)
+#arcane 1536
+model = Model("bt1sragarmor19dncnhp", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1536)
 
+# arcane 1024
+# model = Model("bt11geqgm0ia0g84mnvi", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
+
+# arcane 512
+# model = Model("bt1soaafjmhtf1f2j6ko", "b1gbnhth47rchbtmstlr", "bt16jq41r6uelhtvm018", 512)
+
+# arcane cuda
+# model = Model("bt1p94t08duj27j97kql", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1536)
 
 async def main():
     await dp.start_polling(bot)
+
 
 def make_buttons_keyboard(items: list[str]):
     row = [aiogram.types.KeyboardButton(text=item) for item in items]
@@ -57,7 +66,6 @@ class Form(StatesGroup):
     choosing_model = State()
     selecting_file = State()
     choosing_info_or_file = State()
-
 
 
 #START
@@ -83,17 +91,16 @@ async def cmd_cancel(message: aiogram.types.Message, state: FSMContext):
 #INFO_OR_FILE
 @dp.message(Form.choosing_info_or_file, aiogram.F.text.in_(info_or_file))
 async def info_or_file_chooser(message: aiogram.types.Message, state: FSMContext):
-    text=""
-    if message.text==info_or_file[0]:
-        text="Инфа про бота"
+    text = ""
+    if message.text == info_or_file[0]:
+        text = "Инфа про бота"
     else:
-        text="Выберите формат файла"
+        text = "Выберите формат файла"
     await message.answer(
         text=text,
         reply_markup=make_buttons_keyboard(file_fromat_names)
     )
     await state.set_state(Form.choosing_format_of_file)
-
 
 
 #INFO_OR_FILE_INCORRECT
@@ -110,11 +117,11 @@ async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMConte
 async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext):
     # TODO: Дать прикрепить файл
     # TODO: Проверить, что файл нужного формата и отредактировать его
-    text=""
-    if message.text==file_fromat_names[0]:
-        text="Вы выбрали стилизовать фото, выберите какой моделью хотите воспользоваться"
+    text = ""
+    if message.text == file_fromat_names[0]:
+        text = "Вы выбрали стилизовать фото, выберите какой моделью хотите воспользоваться"
     else:
-        text="Вы выбрали стилизовать видео, выберите какой моделью хотите воспользоваться"
+        text = "Вы выбрали стилизовать видео, выберите какой моделью хотите воспользоваться"
     await message.answer(
         text=text,
         reply_markup=make_buttons_keyboard(model_names)
@@ -129,7 +136,6 @@ async def format_incorrect(message: aiogram.types.Message):
         text="Выберите пожалуйста формат из предложенного списка",
         reply_markup=make_buttons_keyboard(file_fromat_names)
     )
-
 
 
 #MODEL
@@ -147,7 +153,6 @@ async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMCon
         reply_markup=make_buttons_keyboard(file_fromat_names)
     )
     await state.set_state(Form.choosing_format_of_file)
-    
 
 
 #MODEL_INCORRET
@@ -160,21 +165,47 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
 
 
 @dp.message(aiogram.F.content_type == "photo")
-async def get_image(message: aiogram.types.Message, state : FSMContext):
+async def get_image(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
         logging.info("image file is too large")
         return
 
-    # <TODO> аналогично как в get_video
+    user = create_user_if_not_exists(message.from_user.id)
+    update_user_limits(user.id)
+
+    if user.photos_left <= 0:
+        await message.answer("Ты израсходовал свой лимит на фотографии :( Приходи завтра")
+        return
+
+    decrement_photos_left(user.id)
+
+    unique_id = message.photo[-1].file_unique_id
+
+    if is_file_exists(unique_id):
+        url = s3.generate_presigned_url(ClientMethod='get_object',
+                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
+        send_file = URLInputFile(url, filename='img.jpg')
+
+        await message.reply_photo(send_file)
+
+        return
 
     binary: io.BytesIO = await bot.download_file(file.file_path)
     img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
+    binary.seek(0)
+    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
     img = model.process_image(img)
 
     img_encoded = cv2.imencode('.jpg', img)[1]
+
+    s3.upload_fileobj(BytesIO(img_encoded.tobytes()), BUCKET_NAME, unique_id + '-processed')
+
     send_file = BufferedInputFile(img_encoded, filename='img.jpg')
+
+    save_file(unique_id, user.id)
+
     await message.reply_photo(send_file)
 
 
@@ -185,35 +216,25 @@ async def get_video_note(message: aiogram.types.Message):
         logging.info("video_note file is too large")
         return
 
-    # <TODO> аналогично как в get_video
-
-
-@dp.message(aiogram.F.content_type == "video")
-async def get_video(message: aiogram.types.Message):
-    file = await message.bot.get_file(message.video.file_id)
-    if not video_check(file):
-        logging.info("video file is too large")
-        return
-
     user = create_user_if_not_exists(message.from_user.id)
-    # <TODO> где-то здесь (или внутри функции выше) должна быть логика обновления лимитов для юзера
-    # условно его лимиты действуют в течение суток и с каждым днем они должны обновляться
+    update_user_limits(user.id)
+
     if user.videos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит :( Приходи позже")
+        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
         return
 
     decrement_videos_left(user.id)
 
-    unique_id = message.video.file_unique_id
+    unique_id = message.video_note.file_unique_id
     if is_file_exists(unique_id):
-        url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id + 'presigned'})
+        url = s3.generate_presigned_url(ClientMethod='get_object',
+                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
         send_file = URLInputFile(url, filename='vid.mp4')
 
         await message.reply_video(send_file)
 
         return
 
-    save_file(unique_id, user.id)
     binary: io.BytesIO = await bot.download_file(file.file_path)
 
     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
@@ -224,10 +245,60 @@ async def get_video(message: aiogram.types.Message):
     video = model.process_video(video_capture)
     video.seek(0)
 
+    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
+
+    video.seek(0)
     s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
 
-    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
+    save_file(unique_id, user.id)
+
     await message.reply_video(send_file)
+
+
+@dp.message(aiogram.F.content_type == "video")
+async def get_video(message: aiogram.types.Message):
+    file = await message.bot.get_file(message.video.file_id)
+    if not video_check(file):
+        logging.info("video file is too large")
+        return
+
+    user = create_user_if_not_exists(message.from_user.id)
+    update_user_limits(user.id)
+
+    if user.videos_left <= 0:
+        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
+        return
+
+    decrement_videos_left(user.id)
+
+    unique_id = message.video.file_unique_id
+    if is_file_exists(unique_id):
+        url = s3.generate_presigned_url(ClientMethod='get_object',
+                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
+        send_file = URLInputFile(url, filename='vid.mp4')
+
+        await message.reply_video(send_file)
+
+        return
+
+    binary: io.BytesIO = await bot.download_file(file.file_path)
+
+    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+
+    url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
+    video_capture = cv2.VideoCapture(url)
+
+    video = model.process_video(video_capture)
+    video.seek(0)
+
+    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
+    video.seek(0)
+
+    s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
+    save_file(unique_id, user.id)
+
+    await message.reply_video(send_file)
+
 
 def start_bot():
     asyncio.run(main())

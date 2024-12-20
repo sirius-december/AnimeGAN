@@ -1,6 +1,7 @@
 import os
 
 import dotenv
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -35,6 +36,13 @@ def decrement_videos_left(user_id: int) -> None:
         session.commit()
 
 
+def decrement_photos_left(user_id: int) -> None:
+    with Session(engine) as session:
+        user = session.query(User).where(User.id == user_id).scalar()
+        user.photos_left -= 1
+        session.commit()
+
+
 def is_file_exists(file_id: str) -> bool:
     with Session(engine) as session:
         return session.query(File).where(File.id == file_id).scalar() is not None
@@ -56,3 +64,19 @@ def save_file(file_id: str, user_id: int) -> File:
         session.commit()
 
         return session.query(File).where(File.id == file_id).scalar()
+
+
+def update_user_limits(user_id: int) -> None:
+    with (Session(engine) as session):
+        files = session.query(File).where(File.user_id == user_id).order_by(sqlalchemy.desc(File.date)).all()
+
+        print(len(files))
+
+        if len(files) == 0 or files[0].date >= datetime.date.today():
+            return
+
+        user = session.query(User).where(User.id == user_id).scalar()
+        user.videos_left = DEFAULT_VID_CNT
+        user.photos_left = DEFAULT_IMAGE_CNT
+
+        session.commit()

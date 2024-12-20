@@ -1,7 +1,9 @@
+import os
 import time
 import jwt
 import json
 import requests
+import dotenv
 
 def generate_jwt() -> str:
     with open('keys/datasphere-key.json', 'r') as f:
@@ -29,7 +31,13 @@ def generate_jwt() -> str:
     return encoded_token
 
 
-def get_iam_token(encoded_jwt: str) -> str:
+def get_iam_token_jwt(encoded_jwt: str) -> str:
     req = requests.post('https://iam.api.cloud.yandex.net/iam/v1/tokens', json = {"jwt": encoded_jwt})
+    token_obj = json.loads(req.text)
+    return token_obj['iamToken']
+
+def get_iam_token() -> str:
+    OAUTH_TOKEN = os.environ['YANDEX_OAUTH']
+    req = requests.post('https://iam.api.cloud.yandex.net/iam/v1/tokens', json={"yandexPassportOauthToken": OAUTH_TOKEN})
     token_obj = json.loads(req.text)
     return token_obj['iamToken']

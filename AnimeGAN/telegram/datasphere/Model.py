@@ -47,13 +47,6 @@ class Model:
         w = image.shape[1]
         h = image.shape[0]
 
-        if w > h:
-            left = w - h
-            image = cv2.copyMakeBorder(image, left=0, right=0, top=0, bottom=left, borderType=cv2.BORDER_CONSTANT)
-        elif h > w:
-            left = h - w
-            image = cv2.copyMakeBorder(image, left=0, right=left, top=0, bottom=0, borderType=cv2.BORDER_CONSTANT)
-
         image = image / 127.5 - 1.0
 
         image = cv2.resize(image, (self.img_size, self.img_size))
@@ -65,7 +58,7 @@ class Model:
 
         new_height, new_width = self.get_result_size(initial_shape[0], initial_shape[1])
 
-        image = image[0 : new_height, 0 : new_width]
+        image = cv2.resize(image, (new_width, new_height))
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
