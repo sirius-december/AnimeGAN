@@ -80,9 +80,34 @@ class Model:
             if not ret:
                 break
 
-            frames.append(self.process_image(frame))
+            frames.append(self.preprocess_image(frame))
 
         capture.release()
+
+        frames_out: list[np.ndarray] = []
+
+        for i in range(0, len(frames), 24):
+            sublist = frames[i:i+24]
+            while len(sublist) < 24:
+                sublist.append(np.zeros((self.img_size, self.img_size, 3)))
+
+            frames_nd = np.array(sublist)
+
+            frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 2, 3, 1))
+
+            print(frames_nd.shape)
+
+            frames_nd = make_request(
+                node_id=self.node_id,
+                folder_id=self.folder_id,
+                model_id=self.model_id,
+                model_input=frames_nd
+            )
+
+            frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 3, 1, 2))
+
+            for frame in frames_nd:
+                frames_out.append(self.postprocess_image(frame, (height, width)))
 
         output_file = io.BytesIO()
         output = av.open(output_file, 'w', format='mp4')

@@ -275,7 +275,7 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     await state.set_state(Form.choosing_info_or_file)
 
 
-async def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id: int) -> InputFile:
+def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id: int) -> InputFile:
     if is_file_exists(unique_id):
         url = s3.generate_presigned_url(ClientMethod='get_object',
                                         Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
@@ -288,7 +288,7 @@ async def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id:
     url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
     video_capture = cv2.VideoCapture(url)
 
-    video = arcane_photo_model.process_video(video_capture)
+    video = arcane_video_model.process_video(video_capture)
     video.seek(0)
 
     send_file = BufferedInputFile(video.read(), filename='vid.mp4')
