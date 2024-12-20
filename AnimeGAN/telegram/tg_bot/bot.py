@@ -16,7 +16,7 @@ import boto3
 import dotenv
 import io
 
-from aiogram.types import BufferedInputFile, URLInputFile
+from aiogram.types import BufferedInputFile, URLInputFile, InputFile, File
 
 from .utils import image_check, video_check
 
@@ -40,17 +40,17 @@ model_names = ["Hayao", "Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
-#arcane 1536
-model = Model("bt1sragarmor19dncnhp", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1536)
+# arcane photo
+arcane_photo_model = Model("bt1502g74i9ehqbfqf3b", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1024)
 
-# arcane 1024
-# model = Model("bt11geqgm0ia0g84mnvi", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
+# arcane video
+arcane_video_model = Model("bt17okpc7am44shclhm2", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
 
-# arcane 512
-# model = Model("bt1soaafjmhtf1f2j6ko", "b1gbnhth47rchbtmstlr", "bt16jq41r6uelhtvm018", 512)
+# shinkai photo
+shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
-# arcane cuda
-# model = Model("bt1p94t08duj27j97kql", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1536)
+# shinkai video
+shinkai_video_model = Model("bt14hru4n83vigntrm8l", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1536)
 
 async def main():
     await dp.start_polling(bot)
@@ -189,7 +189,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     binary.seek(0)
     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
-    img = model.process_image(img)
+    img = arcane_photo_model.process_image(img)
 
     img_encoded = cv2.imencode('.jpg', img)[1]
 
@@ -220,31 +220,9 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     decrement_videos_left(user.id)
 
     unique_id = message.video_note.file_unique_id
-    if is_file_exists(unique_id):
-        url = s3.generate_presigned_url(ClientMethod='get_object',
-                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
-        send_file = URLInputFile(url, filename='vid.mp4')
-
-        await message.reply_video(send_file)
-
-        return
-
     binary: io.BytesIO = await bot.download_file(file.file_path)
 
-    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
-
-    url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
-    video_capture = cv2.VideoCapture(url)
-
-    video = model.process_video(video_capture)
-    video.seek(0)
-
-    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
-
-    video.seek(0)
-    s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
-
-    save_file(unique_id, user.id)
+    send_file = process_video(unique_id, file, binary, user.id)
 
     await message.reply_video(send_file)
     await state.set_state(Form.choosing_info_or_file)
@@ -268,33 +246,37 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     decrement_videos_left(user.id)
 
     unique_id = message.video.file_unique_id
+    binary: io.BytesIO = await bot.download_file(file.file_path)
+
+    send_file = process_video(unique_id, file, binary, user.id)
+
+    await message.reply_video(send_file)
+    await state.set_state(Form.choosing_info_or_file)
+
+
+async def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id: int) -> InputFile:
     if is_file_exists(unique_id):
         url = s3.generate_presigned_url(ClientMethod='get_object',
                                         Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
         send_file = URLInputFile(url, filename='vid.mp4')
 
-        await message.reply_video(send_file)
-
-        return
-
-    binary: io.BytesIO = await bot.download_file(file.file_path)
+        return send_file
 
     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
     url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
     video_capture = cv2.VideoCapture(url)
 
-    video = model.process_video(video_capture)
+    video = arcane_photo_model.process_video(video_capture)
     video.seek(0)
 
     send_file = BufferedInputFile(video.read(), filename='vid.mp4')
     video.seek(0)
 
     s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
-    save_file(unique_id, user.id)
+    save_file(unique_id, user_id)
 
-    await message.reply_video(send_file)
-    await state.set_state(Form.choosing_info_or_file)
+    return send_file
 
 
 def start_bot():
