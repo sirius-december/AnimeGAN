@@ -87,22 +87,9 @@ class Model:
             if not ret:
                 break
 
-            frames.append(self.preprocess_image(frame))
+            frames.append(self.process_image(frame))
 
         capture.release()
-
-        frames_nd = np.array(frames)
-        frames_nd = make_request(
-            node_id=self.node_id,
-            folder_id=self.folder_id,
-            model_id=self.model_id,
-            model_input=frames_nd
-        )
-
-        frames_out: list[np.ndarray] = []
-
-        for frame in frames_nd:
-            frames_out.append(self.postprocess_image(frame, (height, width)))
 
         output_file = io.BytesIO()
         output = av.open(output_file, 'w', format='mp4')
@@ -110,7 +97,7 @@ class Model:
         stream.height = new_height
         stream.width = new_width
 
-        for frame in frames_out:
+        for frame in frames:
             av_frame = av.VideoFrame.from_ndarray(frame, format='bgr24')
             packet = stream.encode(av_frame)
             output.mux(packet)

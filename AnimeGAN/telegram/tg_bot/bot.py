@@ -16,7 +16,7 @@ import boto3
 import dotenv
 import io
 
-from aiogram.types import BufferedInputFile
+from aiogram.types import BufferedInputFile, URLInputFile
 
 from .utils import image_check, video_check
 
@@ -205,19 +205,27 @@ async def get_video(message: aiogram.types.Message):
     decrement_videos_left(user.id)
 
     unique_id = message.video.file_unique_id
-    if not is_file_exists(unique_id):
-        save_file(unique_id, user.id)
-        binary: io.BytesIO = await bot.download_file(file.file_path)
+    if is_file_exists(unique_id):
+        url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id + 'presigned'})
+        send_file = URLInputFile(url, filename='vid.mp4')
 
-        s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+        await message.reply_video(send_file)
 
-    # <TODO> отправить в ноду для обработки, сохранить обработанный файл в s3, вернуть пользователю ответом обработанный файл
+        return
+
+    save_file(unique_id, user.id)
+    binary: io.BytesIO = await bot.download_file(file.file_path)
+
+    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
     url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
     video_capture = cv2.VideoCapture(url)
 
     video = model.process_video(video_capture)
     video.seek(0)
+
+    s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
+
     send_file = BufferedInputFile(video.read(), filename='vid.mp4')
     await message.reply_video(send_file)
 
