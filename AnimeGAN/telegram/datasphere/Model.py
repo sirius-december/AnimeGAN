@@ -4,7 +4,7 @@ import av
 import numpy as np
 import cv2
 
-from AnimeGAN.telegram.datasphere.request import make_request
+from .request import make_request
 
 class Model:
     def __init__(

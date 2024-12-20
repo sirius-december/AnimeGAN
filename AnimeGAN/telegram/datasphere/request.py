@@ -1,5 +1,5 @@
 import tritonclient.http as httpclient
-from AnimeGAN.telegram.datasphere.util.iam import generate_jwt, get_iam_token_jwt, get_iam_token
+from .util.iam import generate_jwt, get_iam_token_jwt, get_iam_token
 import numpy as np
 
 triton_client = httpclient.InferenceServerClient(url='node-api.datasphere.yandexcloud.net', ssl=True)

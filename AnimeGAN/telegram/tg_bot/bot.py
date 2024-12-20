@@ -20,7 +20,7 @@ from aiogram.types import BufferedInputFile, URLInputFile, InputFile, File
 
 from .utils import image_check, video_check
 
-from telegram.database.core import (
+from ..database.core import (
     create_user_if_not_exists,
     decrement_videos_left,
     is_file_exists,
