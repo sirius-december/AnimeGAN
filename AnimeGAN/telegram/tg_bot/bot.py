@@ -50,7 +50,7 @@ arcane_video_model = Model("bt17okpc7am44shclhm2", "b1g6t0mm2iipgl1677oo", "bt1c
 shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
 # shinkai video
-shinkai_video_model = Model("bt14hru4n83vigntrm8l", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1536)
+shinkai_video_model = Model("bt14hru4n83vigntrm8l", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
 async def main():
     await dp.start_polling(bot)
