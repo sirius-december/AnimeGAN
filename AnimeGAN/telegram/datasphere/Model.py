@@ -12,12 +12,14 @@ class Model:
             node_id: str,
             folder_id: str,
             model_id: str,
-            img_size: int
+            img_size: int,
+            input_type: str = 'FP32'
     ):
         self.node_id = node_id
         self.folder_id = folder_id
         self.model_id = model_id
         self.img_size = img_size
+        self.input_type = input_type
 
     def process_image(self, image: np.ndarray) -> np.ndarray:
         shape = image.shape
@@ -92,6 +94,9 @@ class Model:
                 sublist.append(np.zeros((self.img_size, self.img_size, 3)))
 
             frames_nd = np.array(sublist)
+
+            if self.input_type == 'FP16':
+                frames_nd = np.float16(frames_nd)
 
             frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 2, 3, 1))
 

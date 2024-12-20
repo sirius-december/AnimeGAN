@@ -36,7 +36,7 @@ dp = aiogram.Dispatcher()
 
 info_or_file = ["Больше информации", "Выбрать файл"]
 file_fromat_names = ["Фотография", "Видео"]
-model_names = ["Hayao", "Arcane", "Shinkai"]
+model_names = ["Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
@@ -44,13 +44,13 @@ BUCKET_NAME = "animegan-s3"
 arcane_photo_model = Model("bt1502g74i9ehqbfqf3b", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1024)
 
 # arcane video
-arcane_video_model = Model("bt17okpc7am44shclhm2", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
+arcane_video_model = Model("bt17hmtrjprlqela8tna", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024, 'FP16')
 
 # shinkai photo
 shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
 # shinkai video
-shinkai_video_model = Model("bt14hru4n83vigntrm8l", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
+shinkai_video_model = Model("bt1himij4rb93f4br3bp", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024, 'FP16')
 
 async def main():
     await dp.start_polling(bot)
@@ -163,18 +163,20 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
     )
 
 #SELECTING PHOTO_VIDEO_NOTE INCORRECT
-@dp.message(Form.selecting_file)
-async def incorrect_selecting_file(message: aiogram.types.Message):
-    await message.answer(
-        text="Пожалуйста прикрепите файл нажав на иконку скрепки и отправьте его в чат",
-        reply_markup=aiogram.types.ReplyKeyboardRemove()
-    )
+# @dp.message(Form.selecting_file)
+# async def incorrect_selecting_file(message: aiogram.types.Message):
+#     await message.answer(
+#         text="Пожалуйста прикрепите файл нажав на иконку скрепки и отправьте его в чат",
+#         reply_markup=aiogram.types.ReplyKeyboardRemove()
+#     )
 
 
 #SELECTING PHOTO
 @dp.message(Form.selecting_file, aiogram.F.content_type == "photo")
 async def get_image(message: aiogram.types.Message, state : FSMContext):
-    await state.update_data(file=message.animation.file_id)
+    data = await state.get_data()
+    model = data['chosen_model']
+
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
         logging.info("image file is too large")
@@ -189,7 +191,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 
     decrement_photos_left(user.id)
 
-    unique_id = message.photo[-1].file_unique_id
+    unique_id = message.photo[-1].file_unique_id + '-' + model
 
     if is_file_exists(unique_id):
         url = s3.generate_presigned_url(ClientMethod='get_object',
@@ -205,7 +207,10 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     binary.seek(0)
     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
-    img = arcane_photo_model.process_image(img)
+    if model == 'arcane':
+        img = arcane_photo_model.process_image(img)
+    elif model == 'shinkai':
+        img = shinkai_photo_model.process_image(img)
 
     img_encoded = cv2.imencode('.jpg', img)[1]
 
@@ -222,7 +227,6 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 #SELECTING VIDEO_NOTE
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message, state: FSMContext):
-    await state.update_data(file=message.animation.file_id)
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
         logging.info("video_note file is too large")
@@ -240,7 +244,9 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     unique_id = message.video_note.file_unique_id
     binary: io.BytesIO = await bot.download_file(file.file_path)
 
-    send_file = process_video(unique_id, file, binary, user.id)
+    data = await state.get_data()
+    model = data['chosen_model']
+    send_file = process_video(unique_id, binary, user.id, model)
 
     await message.reply_video(send_file)
     await state.clear()
@@ -250,7 +256,6 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 #SELECTING VIDEO
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video")
 async def get_video(message: aiogram.types.Message, state: FSMContext):
-    await state.update_data(file=message.animation.file_id)
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
         logging.info("video file is too large")
@@ -268,14 +273,16 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     unique_id = message.video.file_unique_id
     binary: io.BytesIO = await bot.download_file(file.file_path)
 
-    send_file = process_video(unique_id, file, binary, user.id)
+    data = await state.get_data()
+    model = data['chosen_model']
+    send_file = process_video(unique_id, binary, user.id, model)
 
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
 
 
-def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id: int) -> InputFile:
+def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) -> InputFile:
     if is_file_exists(unique_id):
         url = s3.generate_presigned_url(ClientMethod='get_object',
                                         Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
@@ -288,7 +295,13 @@ def process_video(unique_id: str, file: File, binary: io.BytesIO, user_id: int) 
     url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
     video_capture = cv2.VideoCapture(url)
 
-    video = arcane_video_model.process_video(video_capture)
+    if model == 'arcane':
+        video = arcane_video_model.process_video(video_capture)
+    elif model == 'shinkai':
+        video = shinkai_video_model.process_video(video_capture)
+    else:
+        video = None
+
     video.seek(0)
 
     send_file = BufferedInputFile(video.read(), filename='vid.mp4')
