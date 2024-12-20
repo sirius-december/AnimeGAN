@@ -70,8 +70,6 @@ def update_user_limits(user_id: int) -> None:
     with (Session(engine) as session):
         files = session.query(File).where(File.user_id == user_id).order_by(sqlalchemy.desc(File.date)).all()
 
-        print(len(files))
-
         if len(files) == 0 or files[0].date >= datetime.date.today():
             return
 
