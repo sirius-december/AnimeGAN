@@ -116,8 +116,6 @@ async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMConte
 #FILE CHOSEN CORRECT
 @dp.message(aiogram.F.text.in_(file_fromat_names))
 async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext):
-    # TODO: Дать прикрепить файл
-    # TODO: Проверить, что файл нужного формата и отредактировать его
     text=""
     if message.text==file_fromat_names[0]:
         text="фото"
@@ -293,7 +291,6 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     save_file(unique_id, user.id)
 
     await message.reply_video(send_file)
-    # <TODO> отправить в ноду для обработки, сохранить обработанный файл в s3, вернуть пользователю ответом обработанный файл
     await state.set_state(Form.choosing_info_or_file)
 
 
