@@ -95,10 +95,7 @@ class Model:
 
             frames_nd = np.array(sublist)
 
-            print(self.input_type)
-
-            if self.input_type == 'FP16':
-                frames_nd = np.float16(frames_nd)
+            frames_nd = np.float16(frames_nd)
 
             frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 2, 3, 1))
 
