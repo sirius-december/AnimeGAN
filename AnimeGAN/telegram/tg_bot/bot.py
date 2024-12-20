@@ -41,10 +41,10 @@ s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
 #arcane 1536
-# model = Model("bt1sragarmor19dncnhp", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1536)
+model = Model("bt1sragarmor19dncnhp", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1536)
 
 # arcane 1024
-model = Model("bt11geqgm0ia0g84mnvi", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
+# model = Model("bt11geqgm0ia0g84mnvi", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
 
 # arcane 512
 # model = Model("bt1soaafjmhtf1f2j6ko", "b1gbnhth47rchbtmstlr", "bt16jq41r6uelhtvm018", 512)
