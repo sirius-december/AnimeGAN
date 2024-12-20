@@ -121,7 +121,10 @@ async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext)
         text="фото"
     else:
         text="Видео"
-    await message.answer(text=f"Вы выбрали стилизовать {text}, какой моделью хотите стилизовать")
+    await message.answer(
+        text=f"Вы выбрали стилизовать {text}, какой моделью хотите стилизовать",
+        reply_markup=make_buttons_keyboard(model_names)    
+    )
     await state.set_state(Form.choosing_model)
 
 
