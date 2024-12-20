@@ -1,11 +1,12 @@
 import tritonclient.http as httpclient
-from AnimeGAN.telegram.datasphere.util.iam import generate_jwt, get_iam_token
+from AnimeGAN.telegram.datasphere.util.iam import generate_jwt, get_iam_token_jwt, get_iam_token
 import numpy as np
 
 triton_client = httpclient.InferenceServerClient(url='node-api.datasphere.yandexcloud.net', ssl=True)
 
 def make_request(node_id: str, folder_id: str, model_id: str, model_input):
-    iam_token = get_iam_token(generate_jwt())
+    # iam_token = get_iam_token_jwt(generate_jwt())
+    iam_token = get_iam_token()
 
     headers = {
         "Authorization": f"Bearer {iam_token}",
