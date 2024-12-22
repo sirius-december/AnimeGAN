@@ -14,7 +14,7 @@ class Model:
             folder_id: str,
             model_id: str,
             img_size: int,
-            input_type: str = 'FP32'
+            input_type: str = "FP32"
     ):
         self.node_id = node_id
         self.folder_id = folder_id
@@ -32,7 +32,8 @@ class Model:
             node_id=self.node_id,
             folder_id=self.folder_id,
             model_id=self.model_id,
-            model_input=np.array([image])
+            model_input=np.array([image]),
+            datatype=self.input_type
         )[0]
 
         result = np.moveaxis(result, (0, 1, 2), (2, 0, 1))
@@ -106,7 +107,8 @@ class Model:
                 node_id=self.node_id,
                 folder_id=self.folder_id,
                 model_id=self.model_id,
-                model_input=frames_nd
+                model_input=frames_nd,
+                datatype=self.input_type
             )
 
             frames_nd = frames_nd.astype(np.float32)
