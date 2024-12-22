@@ -180,7 +180,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     update_user_limits(user.id)
 
     if user.photos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на фотографии.\n Приходи завтра!")
+        await message.answer("😢 Ты израсходовал свой лимит на фотографии.\n Приходи завтра!")
         return
 
     decrement_photos_left(user.id)
@@ -214,21 +214,21 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     await message.reply_photo(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
 
 #SELECTING VIDEO_NOTE
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
 async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
-        logging.info("video_note file is too large")
+        logging.info("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
     update_user_limits(user.id)
 
     if user.videos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
         return
 
     decrement_videos_left(user.id)
@@ -263,7 +263,7 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
 
 
 
@@ -272,14 +272,14 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 async def get_video(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
-        logging.info("video file is too large")
+        logging.info("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
     update_user_limits(user.id)
 
     if user.videos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
         return
 
     decrement_videos_left(user.id)
@@ -313,14 +313,14 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
 
 
 #SELECTING PHOTO_VIDEO_NOTE INCORRECT
 @dp.message(Form.selecting_file)
 async def incorrect_selecting_file(message: aiogram.types.Message):
     await message.answer(
-        text="Пожалуйста прикрепите файл нажав на иконку скрепки и отправьте его в чат",
+        text="Пожалуйста прикрепите файл нажав на иконку 📎 скрепки и отправьте его в чат",
         reply_markup=aiogram.types.ReplyKeyboardRemove()
     )
 
