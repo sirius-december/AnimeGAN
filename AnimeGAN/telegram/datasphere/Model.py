@@ -73,7 +73,7 @@ class Model:
     def process_video(self, capture: cv2.VideoCapture) -> io.BytesIO:
         frames: list[np.ndarray] = []
         fps = capture.get(cv2.CAP_PROP_FPS)
-        frames_cnt = capture.get(cv2.CAP_PROP_FRAME_COUNT)
+        frames_cnt = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 

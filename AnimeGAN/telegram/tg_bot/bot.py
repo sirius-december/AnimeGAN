@@ -215,7 +215,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
     await message.reply_photo(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
 
 #SELECTING VIDEO_NOTE
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
@@ -244,7 +244,7 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
 
 
 
@@ -275,7 +275,7 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="блабла",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
 
 def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) -> InputFile:
     if is_file_exists(unique_id):
