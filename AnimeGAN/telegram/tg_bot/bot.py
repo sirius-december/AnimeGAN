@@ -239,7 +239,7 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 
     data = await state.get_data()
     model = data['chosen_model']
-    send_file = process_video(unique_id, binary, user.id, model)
+    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
 
     await message.reply_video(send_file)
     await state.clear()
@@ -270,7 +270,7 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
 
     data = await state.get_data()
     model = data['chosen_model']
-    send_file = process_video(unique_id, binary, user.id, model)
+    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
 
     await message.reply_video(send_file)
     await state.clear()
