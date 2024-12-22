@@ -1,4 +1,5 @@
 import io
+import logging
 
 import av
 import numpy as np
@@ -95,11 +96,11 @@ class Model:
 
             frames_nd = np.array(sublist)
 
-            frames_nd = np.float16(frames_nd)
-
             frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 2, 3, 1))
 
-            print(frames_nd.shape)
+            frames_nd = frames_nd.astype(np.float16)
+
+            logging.info(frames_nd.dtype)
 
             frames_nd = make_request(
                 node_id=self.node_id,
@@ -107,6 +108,8 @@ class Model:
                 model_id=self.model_id,
                 model_input=frames_nd
             )
+
+            frames_nd = frames_nd.astype(np.float32)
 
             frames_nd = np.moveaxis(frames_nd, (0, 1, 2, 3), (0, 3, 1, 2))
 
@@ -119,7 +122,7 @@ class Model:
         stream.height = new_height
         stream.width = new_width
 
-        for frame in frames:
+        for frame in frames_out:
             av_frame = av.VideoFrame.from_ndarray(frame, format='bgr24')
             packet = stream.encode(av_frame)
             output.mux(packet)
