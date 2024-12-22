@@ -18,7 +18,7 @@ def make_request(node_id: str, folder_id: str, model_id: str, model_input, datat
     payload = httpclient.InferInput("input_variable_0", input_shape, datatype)
 
     input_batch = np.array(model_input)
-    payload.set_data_from_numpy(input_batch, binary_data=False)
+    payload.set_data_from_numpy(input_batch, binary_data=True)
 
     inputs = [payload]
     results = triton_client.infer(model_id, inputs=inputs, headers=headers)
