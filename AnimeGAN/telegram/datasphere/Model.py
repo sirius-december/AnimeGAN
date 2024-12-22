@@ -73,6 +73,7 @@ class Model:
     def process_video(self, capture: cv2.VideoCapture) -> io.BytesIO:
         frames: list[np.ndarray] = []
         fps = capture.get(cv2.CAP_PROP_FPS)
+        frames_cnt = capture.get(cv2.CAP_PROP_FRAME_COUNT)
         height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 
@@ -123,6 +124,8 @@ class Model:
         stream = output.add_stream('h264', int(fps))
         stream.height = new_height
         stream.width = new_width
+
+        frames_out = frames_out[0:frames_cnt]
 
         for frame in frames_out:
             av_frame = av.VideoFrame.from_ndarray(frame, format='bgr24')

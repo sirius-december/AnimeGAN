@@ -44,13 +44,13 @@ BUCKET_NAME = "animegan-s3"
 arcane_photo_model = Model("bt1502g74i9ehqbfqf3b", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1024)
 
 # arcane video
-arcane_video_model = Model("bt17hmtrjprlqela8tna", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 512, 'FP16')
+arcane_video_model = Model("bt1fcctem48v436sal27", "b1g6t0mm2iipgl1677oo", "bt1gitamskgv67aqi3cc", 512, 'FP16')
 
 # shinkai photo
 shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
 # shinkai video
-shinkai_video_model = Model("bt1himij4rb93f4br3bp", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 512, 'FP16')
+shinkai_video_model = Model("bt18j7v0tojjkp3fas45", "b1g6t0mm2iipgl1677oo", "bt18hqbmflk896amqkuj", 512, 'FP16')
 
 async def main():
     await dp.start_polling(bot)
