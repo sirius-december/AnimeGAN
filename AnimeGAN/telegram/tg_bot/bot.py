@@ -41,7 +41,7 @@ s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
 # arcane photo
-arcane_photo_model = Model("bt1502g74i9ehqbfqf3b", "b1g6t0mm2iipgl1677oo", "bt10rkrma6vm78i03mbf", 1024)
+arcane_photo_model = Model("bt14a37brj1bvff0r2sb", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
 
 # arcane video
 arcane_video_model = Model("bt1fcctem48v436sal27", "b1g6t0mm2iipgl1677oo", "bt1gitamskgv67aqi3cc", 512, 'FP16')
