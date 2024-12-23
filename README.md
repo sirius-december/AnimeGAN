@@ -22,3 +22,4 @@ Required Env variables:
 - `AWS_SECRET_ACCESS_KEY` – AWS secret access key
 - `AWS_DEFAULT_REGION` – AWS region
 - `AWS_ENDPOINT_URL` – AWS endpoint URL
+- `YANDEX_OAUTH` – Yandex OAUTH token for account with access to datasphere

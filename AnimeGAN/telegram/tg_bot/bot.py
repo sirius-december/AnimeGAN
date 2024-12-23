@@ -188,39 +188,46 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 
     decrement_photos_left(user.id)
 
-    unique_id = message.photo[-1].file_unique_id + '-' + model
+    await message.answer("⏱️ Обрабатываем... Возможно, придется немного подождать")
 
-    if is_file_exists(unique_id):
-        url = s3.generate_presigned_url(ClientMethod='get_object',
-                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
-        send_file = URLInputFile(url, filename='img.jpg')
+    try:
+        unique_id = message.photo[-1].file_unique_id + '-' + model
+
+        if is_file_exists(unique_id):
+            url = s3.generate_presigned_url(ClientMethod='get_object',
+                                            Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
+            send_file = URLInputFile(url, filename='img.jpg')
+
+            await message.reply_photo(send_file)
+
+            return
+
+        binary: io.BytesIO = await bot.download_file(file.file_path)
+        img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
+        binary.seek(0)
+        s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+
+        if model == 'arcane':
+            img = arcane_photo_model.process_image(img)
+        elif model == 'shinkai':
+            img = shinkai_photo_model.process_image(img)
+
+        img_encoded = cv2.imencode('.jpg', img)[1]
+
+        s3.upload_fileobj(BytesIO(img_encoded.tobytes()), BUCKET_NAME, unique_id + '-processed')
+
+        send_file = BufferedInputFile(img_encoded, filename='img.jpg')
+
+        save_file(unique_id, user.id)
 
         await message.reply_photo(send_file)
-
-        return
-
-    binary: io.BytesIO = await bot.download_file(file.file_path)
-    img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
-    binary.seek(0)
-    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
-
-    if model == 'arcane':
-        img = arcane_photo_model.process_image(img)
-    elif model == 'shinkai':
-        img = shinkai_photo_model.process_image(img)
-
-    img_encoded = cv2.imencode('.jpg', img)[1]
-
-    s3.upload_fileobj(BytesIO(img_encoded.tobytes()), BUCKET_NAME, unique_id + '-processed')
-
-    send_file = BufferedInputFile(img_encoded, filename='img.jpg')
-
-    save_file(unique_id, user.id)
-
-    await message.reply_photo(send_file)
-    await state.clear()
-    await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+    except:
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Возможно, что-то пошло не так. Если кнопки не работают, используйте /start", reply_markup=make_buttons_keyboard(info_or_file))
 
 #SELECTING VIDEO_NOTE
 @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
@@ -239,18 +246,25 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 
     decrement_videos_left(user.id)
 
-    unique_id = message.video_note.file_unique_id
-    binary: io.BytesIO = await bot.download_file(file.file_path)
+    await message.answer("⏱️ Обрабатываем... Возможно, придется немного подождать")
 
-    data = await state.get_data()
-    model = data['chosen_model']
-    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
+    try:
+        unique_id = message.video_note.file_unique_id
+        binary: io.BytesIO = await bot.download_file(file.file_path)
 
-    await message.reply_video(send_file)
-    await state.clear()
-    await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
+        data = await state.get_data()
+        model = data['chosen_model']
+        send_file = process_video(unique_id + '-' + model, binary, user.id, model)
 
+        await message.reply_video(send_file)
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
+    except:
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Возможно, что-то пошло не так. Если кнопки не работают, используйте /start",
+                             reply_markup=make_buttons_keyboard(info_or_file))
 
 
 #SELECTING VIDEO
@@ -270,17 +284,24 @@ async def get_video(message: aiogram.types.Message, state: FSMContext):
 
     decrement_videos_left(user.id)
 
-    unique_id = message.video.file_unique_id
-    binary: io.BytesIO = await bot.download_file(file.file_path)
+    await message.answer("⏱️ Обрабатываем... Возможно, придется немного подождать")
 
-    data = await state.get_data()
-    model = data['chosen_model']
-    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
+    try:
+        unique_id = message.video.file_unique_id
+        binary: io.BytesIO = await bot.download_file(file.file_path)
 
-    await message.reply_video(send_file)
-    await state.clear()
-    await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+        data = await state.get_data()
+        model = data['chosen_model']
+        send_file = process_video(unique_id + '-' + model, binary, user.id, model)
+
+        await message.reply_video(send_file)
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+    except:
+        await state.clear()
+        await state.set_state(Form.choosing_info_or_file)
+        await message.answer(text="Возможно, что-то пошло не так. Если кнопки не работают, используйте /start", reply_markup=make_buttons_keyboard(info_or_file))
 
 def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) -> InputFile:
     if is_file_exists(unique_id):
