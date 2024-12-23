@@ -73,7 +73,10 @@ class Form(StatesGroup):
 @dp.message(aiogram.filters.Command("start"))
 async def cmd_start(message: aiogram.types.Message, state: FSMContext):
     await message.answer(
-        text="Привет! Я бот для стилизации нетяжелых фото и видео",
+        text="Привет! 🎨 Добро пожаловать в нашего бота для стилизации фотографий и видео с помощью нейронных сетей! 🚀\n \
+            Здесь ты можешь легко преобразить свои фото и видео в уникальные произведения искусства, добавив различные стили. \
+            Всё, что тебе нужно — отправить своё изображение или видео, выбрать модель и наблюдать, как твой контент преображается!\n \
+            Чтобы начать, просто следуй инструкции.✨",
         reply_markup=make_buttons_keyboard(info_or_file)
     )
     await state.set_state(Form.choosing_info_or_file)
@@ -83,7 +86,7 @@ async def cmd_start(message: aiogram.types.Message, state: FSMContext):
 @dp.message(aiogram.filters.Command("cancel"))
 async def cmd_cancel(message: aiogram.types.Message, state: FSMContext):
     await message.answer(
-        text="Отменили ваш выбор",
+        text="❌ Отменили ваш выбор!",
         reply_markup=make_buttons_keyboard(info_or_file)
     )
     await state.set_state(Form.choosing_info_or_file)
@@ -94,9 +97,11 @@ async def cmd_cancel(message: aiogram.types.Message, state: FSMContext):
 async def info_or_file_chooser(message: aiogram.types.Message, state: FSMContext):
     text = ""
     if message.text == info_or_file[0]:
-        text = "Инфа про бота"
+        text="🤖 Для стилизации фото и видео в нашем боте используется GAN.\n \
+            GAN (Generative Adversarial Networks) — это тип нейросетей, состоящий из двух модулей: генератора, создающего новые данные, и дискриминатора, оценивающего их реалистичность.\n \
+            Эти модули соревнуются друг с другом, что позволяет генерировать высококачественные изображения, видео и другие медиа, часто используемые для стилизации и генерации контента."
     else:
-        text = "Выберите формат файла"
+        text = "✅ Выберите формат файла"
     await message.answer(
         text=text,
         reply_markup=make_buttons_keyboard(file_fromat_names)
@@ -108,7 +113,7 @@ async def info_or_file_chooser(message: aiogram.types.Message, state: FSMContext
 @dp.message(Form.choosing_info_or_file)
 async def info_or_file_incorrect(message: aiogram.types.Message, state: FSMContext):
     await message.answer(
-        text="Пожалуйста сделайте выбор из списка",
+        text="👇 Пожалуйста сделайте выбор из предложенного списка",
         reply_markup=make_buttons_keyboard(file_fromat_names)
     )
 
@@ -119,11 +124,11 @@ async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext)
     await state.update_data(chosen_format_of_file=message.text.lower())
     text=""
     if message.text==file_fromat_names[0]:
-        text="фото"
+        text="📷 фото"
     else:
-        text="Видео"
+        text="🎥 видео"
     await message.answer(
-        text=f"Вы выбрали стилизовать {text}, какой моделью хотите стилизовать",
+        text=f"Вы выбрали стилизовать {text}, какой моделью хотите стилизовать 🤔",
         reply_markup=make_buttons_keyboard(model_names)    
     )
     await state.set_state(Form.choosing_model)
@@ -133,7 +138,7 @@ async def format_chosen_photo(message: aiogram.types.Message, state: FSMContext)
 @dp.message(Form.choosing_format_of_file)
 async def format_incorrect(message: aiogram.types.Message):
     await message.answer(
-        text="Выберите пожалуйста формат из предложенного списка",
+        text="👇 Выберите пожалуйста формат из предложенного списка",
         reply_markup=make_buttons_keyboard(file_fromat_names)
     )
 
@@ -147,7 +152,7 @@ async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMCon
     for model in model_names:
         if message.text == model:
             await message.answer(
-                text=f"Вы выбрали модель {model}, теперь прикрепите файл",
+                text=f"Вы выбрали модель {model}, теперь прикрепите файл 📎",
                 reply_markup=aiogram.types.ReplyKeyboardRemove()
             )
             break
@@ -158,7 +163,7 @@ async def choosing_model_for_photo(message: aiogram.types.Message, state: FSMCon
 @dp.message(Form.choosing_model)
 async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
     await message.answer(
-        text="У нас нет такой модели, выберите пожалуйста модель из предложенного списка:",
+        text="👇 У нас нет такой модели, выберите пожалуйста модель из предложенного списка:",
         reply_markup=make_buttons_keyboard(model_names)
     )
 
@@ -171,14 +176,14 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
-        logging.info("image file is too large")
+        await message.answer("😢 Изображение слишком большое, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
     update_user_limits(user.id)
 
     if user.photos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на фотографии :( Приходи завтра")
+        await message.answer("😢 Ты израсходовал свой лимит на фотографии.\n Приходи завтра!")
         return
 
     decrement_photos_left(user.id)
@@ -222,14 +227,14 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
-        logging.info("video_note file is too large")
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
     update_user_limits(user.id)
 
     if user.videos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
         return
 
     decrement_videos_left(user.id)
@@ -244,7 +249,7 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     await message.reply_video(send_file)
     await state.clear()
     await state.set_state(Form.choosing_info_or_file)
-    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
 
 
 
@@ -253,14 +258,14 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 async def get_video(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
-        logging.info("video file is too large")
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
     update_user_limits(user.id)
 
     if user.videos_left <= 0:
-        await message.answer("Ты израсходовал свой лимит на видео :( Приходи завтра")
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
         return
 
     decrement_videos_left(user.id)
@@ -311,7 +316,7 @@ def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) 
 @dp.message(Form.selecting_file)
 async def incorrect_selecting_file(message: aiogram.types.Message):
     await message.answer(
-        text="Пожалуйста прикрепите файл нажав на иконку скрепки и отправьте его в чат",
+        text="Пожалуйста прикрепите файл нажав на иконку 📎 скрепки и отправьте его в чат",
         reply_markup=aiogram.types.ReplyKeyboardRemove()
     )
 
