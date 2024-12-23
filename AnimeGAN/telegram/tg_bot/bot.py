@@ -176,7 +176,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 
     file = await message.bot.get_file(message.photo[-1].file_id)
     if not image_check(file):
-        logging.info("😢 Изображение слишком большое, бот не сможет его обработать")
+        await message.answer("😢 Изображение слишком большое, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
@@ -227,7 +227,7 @@ async def get_image(message: aiogram.types.Message, state : FSMContext):
 async def get_video_note(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video_note.file_id)
     if not video_check(file):
-        logging.info("😢 Кружок слишком большой, бот не сможет его обработать")
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
@@ -258,7 +258,7 @@ async def get_video_note(message: aiogram.types.Message, state: FSMContext):
 async def get_video(message: aiogram.types.Message, state: FSMContext):
     file = await message.bot.get_file(message.video.file_id)
     if not video_check(file):
-        logging.info("😢 Кружок слишком большой, бот не сможет его обработать")
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
         return
 
     user = create_user_if_not_exists(message.from_user.id)
