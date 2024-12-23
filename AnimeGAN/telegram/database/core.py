@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from telegram.database.entities import *
+from .entities import *
 
 dotenv.load_dotenv()
 
