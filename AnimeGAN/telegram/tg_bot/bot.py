@@ -16,19 +16,19 @@ import boto3
 import dotenv
 import io
 
-# from aiogram.types import BufferedInputFile, URLInputFile, InputFile, File
+from aiogram.types import BufferedInputFile, URLInputFile, InputFile, File
 
-# from .utils import image_check, video_check
+from .utils import image_check, video_check
 
-# from ..database.core import (
-#     create_user_if_not_exists,
-#     decrement_videos_left,
-#     is_file_exists,
-#     save_file, update_user_limits, decrement_photos_left,
-# )
-# from ..datasphere.Model import Model
+from ..database.core import (
+    create_user_if_not_exists,
+    decrement_videos_left,
+    is_file_exists,
+    save_file, update_user_limits, decrement_photos_left,
+)
+from ..datasphere.Model import Model
 
-# logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 dotenv.load_dotenv()
 
 bot = aiogram.Bot(os.environ["TOKEN"])
@@ -40,17 +40,17 @@ model_names = ["Arcane", "Shinkai"]
 s3 = boto3.client("s3")
 BUCKET_NAME = "animegan-s3"
 
-# # arcane photo
-# arcane_photo_model = Model("bt14a37brj1bvff0r2sb", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
+# arcane photo
+arcane_photo_model = Model("bt14a37brj1bvff0r2sb", "b1g6t0mm2iipgl1677oo", "bt1cuv003aib6td7fcka", 1024)
 
-# # arcane video
-# arcane_video_model = Model("bt1fcctem48v436sal27", "b1g6t0mm2iipgl1677oo", "bt1gitamskgv67aqi3cc", 512, 'FP16')
+# arcane video
+arcane_video_model = Model("bt1fcctem48v436sal27", "b1g6t0mm2iipgl1677oo", "bt1gitamskgv67aqi3cc", 512, 'FP16')
 
-# # shinkai photo
-# shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
+# shinkai photo
+shinkai_photo_model = Model("bt1rtcs34k5n8v7a1gli", "b1g6t0mm2iipgl1677oo", "bt18q785h1mfo70jls77", 1024)
 
-# # shinkai video
-# shinkai_video_model = Model("bt18j7v0tojjkp3fas45", "b1g6t0mm2iipgl1677oo", "bt18hqbmflk896amqkuj", 512, 'FP16')
+# shinkai video
+shinkai_video_model = Model("bt18j7v0tojjkp3fas45", "b1g6t0mm2iipgl1677oo", "bt18hqbmflk896amqkuj", 512, 'FP16')
 
 async def main():
     await dp.start_polling(bot)
@@ -169,148 +169,148 @@ async def model_for_photo_chosen_incorrect(message: aiogram.types.Message):
 
 
 #SELECTING PHOTO
-# @dp.message(Form.selecting_file, aiogram.F.content_type == "photo")
-# async def get_image(message: aiogram.types.Message, state : FSMContext):
-#     data = await state.get_data()
-#     model = data['chosen_model']
+@dp.message(Form.selecting_file, aiogram.F.content_type == "photo")
+async def get_image(message: aiogram.types.Message, state : FSMContext):
+    data = await state.get_data()
+    model = data['chosen_model']
 
-#     file = await message.bot.get_file(message.photo[-1].file_id)
-#     if not image_check(file):
-#         await message.answer("😢 Изображение слишком большое, бот не сможет его обработать")
-#         return
+    file = await message.bot.get_file(message.photo[-1].file_id)
+    if not image_check(file):
+        await message.answer("😢 Изображение слишком большое, бот не сможет его обработать")
+        return
 
-#     user = create_user_if_not_exists(message.from_user.id)
-#     update_user_limits(user.id)
+    user = create_user_if_not_exists(message.from_user.id)
+    update_user_limits(user.id)
 
-#     if user.photos_left <= 0:
-#         await message.answer("😢 Ты израсходовал свой лимит на фотографии.\n Приходи завтра!")
-#         return
+    if user.photos_left <= 0:
+        await message.answer("😢 Ты израсходовал свой лимит на фотографии.\n Приходи завтра!")
+        return
 
-#     decrement_photos_left(user.id)
+    decrement_photos_left(user.id)
 
-#     unique_id = message.photo[-1].file_unique_id + '-' + model
+    unique_id = message.photo[-1].file_unique_id + '-' + model
 
-#     if is_file_exists(unique_id):
-#         url = s3.generate_presigned_url(ClientMethod='get_object',
-#                                         Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
-#         send_file = URLInputFile(url, filename='img.jpg')
+    if is_file_exists(unique_id):
+        url = s3.generate_presigned_url(ClientMethod='get_object',
+                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
+        send_file = URLInputFile(url, filename='img.jpg')
 
-#         await message.reply_photo(send_file)
+        await message.reply_photo(send_file)
 
-#         return
+        return
 
-#     binary: io.BytesIO = await bot.download_file(file.file_path)
-#     img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
-#     binary.seek(0)
-#     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+    binary: io.BytesIO = await bot.download_file(file.file_path)
+    img = cv2.imdecode(np.frombuffer(binary.read(), np.uint8), 1)
+    binary.seek(0)
+    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
-#     if model == 'arcane':
-#         img = arcane_photo_model.process_image(img)
-#     elif model == 'shinkai':
-#         img = shinkai_photo_model.process_image(img)
+    if model == 'arcane':
+        img = arcane_photo_model.process_image(img)
+    elif model == 'shinkai':
+        img = shinkai_photo_model.process_image(img)
 
-#     img_encoded = cv2.imencode('.jpg', img)[1]
+    img_encoded = cv2.imencode('.jpg', img)[1]
 
-#     s3.upload_fileobj(BytesIO(img_encoded.tobytes()), BUCKET_NAME, unique_id + '-processed')
+    s3.upload_fileobj(BytesIO(img_encoded.tobytes()), BUCKET_NAME, unique_id + '-processed')
 
-#     send_file = BufferedInputFile(img_encoded, filename='img.jpg')
+    send_file = BufferedInputFile(img_encoded, filename='img.jpg')
 
-#     save_file(unique_id, user.id)
+    save_file(unique_id, user.id)
 
-#     await message.reply_photo(send_file)
-#     await state.clear()
-#     await state.set_state(Form.choosing_info_or_file)
-#     await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.reply_photo(send_file)
+    await state.clear()
+    await state.set_state(Form.choosing_info_or_file)
+    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
 
 #SELECTING VIDEO_NOTE
-# @dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
-# async def get_video_note(message: aiogram.types.Message, state: FSMContext):
-#     file = await message.bot.get_file(message.video_note.file_id)
-#     if not video_check(file):
-#         await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
-#         return
+@dp.message(Form.selecting_file, aiogram.F.content_type == "video_note")
+async def get_video_note(message: aiogram.types.Message, state: FSMContext):
+    file = await message.bot.get_file(message.video_note.file_id)
+    if not video_check(file):
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
+        return
 
-#     user = create_user_if_not_exists(message.from_user.id)
-#     update_user_limits(user.id)
+    user = create_user_if_not_exists(message.from_user.id)
+    update_user_limits(user.id)
 
-#     if user.videos_left <= 0:
-#         await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
-#         return
+    if user.videos_left <= 0:
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
+        return
 
-#     decrement_videos_left(user.id)
+    decrement_videos_left(user.id)
 
-#     unique_id = message.video_note.file_unique_id
-#     binary: io.BytesIO = await bot.download_file(file.file_path)
+    unique_id = message.video_note.file_unique_id
+    binary: io.BytesIO = await bot.download_file(file.file_path)
 
-#     data = await state.get_data()
-#     model = data['chosen_model']
-#     send_file = process_video(unique_id + '-' + model, binary, user.id, model)
+    data = await state.get_data()
+    model = data['chosen_model']
+    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
 
-#     await message.reply_video(send_file)
-#     await state.clear()
-#     await state.set_state(Form.choosing_info_or_file)
-#     await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.reply_video(send_file)
+    await state.clear()
+    await state.set_state(Form.choosing_info_or_file)
+    await message.answer(text="Можем продолжать!",reply_markup=make_buttons_keyboard(info_or_file))
 
 
 
 #SELECTING VIDEO
-# @dp.message(Form.selecting_file, aiogram.F.content_type == "video")
-# async def get_video(message: aiogram.types.Message, state: FSMContext):
-#     file = await message.bot.get_file(message.video.file_id)
-#     if not video_check(file):
-#         await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
-#         return
+@dp.message(Form.selecting_file, aiogram.F.content_type == "video")
+async def get_video(message: aiogram.types.Message, state: FSMContext):
+    file = await message.bot.get_file(message.video.file_id)
+    if not video_check(file):
+        await message.answer("😢 Кружок слишком большой, бот не сможет его обработать")
+        return
 
-#     user = create_user_if_not_exists(message.from_user.id)
-#     update_user_limits(user.id)
+    user = create_user_if_not_exists(message.from_user.id)
+    update_user_limits(user.id)
 
-#     if user.videos_left <= 0:
-#         await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
-#         return
+    if user.videos_left <= 0:
+        await message.answer("😢 Ты израсходовал свой лимит на видео.\n Приходи завтра!")
+        return
 
-#     decrement_videos_left(user.id)
+    decrement_videos_left(user.id)
 
-#     unique_id = message.video.file_unique_id
-#     binary: io.BytesIO = await bot.download_file(file.file_path)
+    unique_id = message.video.file_unique_id
+    binary: io.BytesIO = await bot.download_file(file.file_path)
 
-#     data = await state.get_data()
-#     model = data['chosen_model']
-#     send_file = process_video(unique_id + '-' + model, binary, user.id, model)
+    data = await state.get_data()
+    model = data['chosen_model']
+    send_file = process_video(unique_id + '-' + model, binary, user.id, model)
 
-#     await message.reply_video(send_file)
-#     await state.clear()
-#     await state.set_state(Form.choosing_info_or_file)
-#     await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
+    await message.reply_video(send_file)
+    await state.clear()
+    await state.set_state(Form.choosing_info_or_file)
+    await message.answer(text="Можем продолжать",reply_markup=make_buttons_keyboard(info_or_file))
 
-# def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) -> InputFile:
-#     if is_file_exists(unique_id):
-#         url = s3.generate_presigned_url(ClientMethod='get_object',
-#                                         Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
-#         send_file = URLInputFile(url, filename='vid.mp4')
+def process_video(unique_id: str, binary: io.BytesIO, user_id: int, model: str) -> InputFile:
+    if is_file_exists(unique_id):
+        url = s3.generate_presigned_url(ClientMethod='get_object',
+                                        Params={'Bucket': BUCKET_NAME, 'Key': unique_id + '-processed'})
+        send_file = URLInputFile(url, filename='vid.mp4')
 
-#         return send_file
+        return send_file
 
-#     s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
+    s3.upload_fileobj(binary, BUCKET_NAME, unique_id)
 
-#     url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
-#     video_capture = cv2.VideoCapture(url)
+    url = s3.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET_NAME, 'Key': unique_id})
+    video_capture = cv2.VideoCapture(url)
 
-#     if model == 'arcane':
-#         video = arcane_video_model.process_video(video_capture)
-#     elif model == 'shinkai':
-#         video = shinkai_video_model.process_video(video_capture)
-#     else:
-#         video = None
+    if model == 'arcane':
+        video = arcane_video_model.process_video(video_capture)
+    elif model == 'shinkai':
+        video = shinkai_video_model.process_video(video_capture)
+    else:
+        video = None
 
-#     video.seek(0)
+    video.seek(0)
 
-#     send_file = BufferedInputFile(video.read(), filename='vid.mp4')
-#     video.seek(0)
+    send_file = BufferedInputFile(video.read(), filename='vid.mp4')
+    video.seek(0)
 
-#     s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
-#     save_file(unique_id, user_id)
+    s3.upload_fileobj(video, BUCKET_NAME, unique_id + '-processed')
+    save_file(unique_id, user_id)
 
-#     return send_file
+    return send_file
 
 #SELECTING PHOTO_VIDEO_NOTE INCORRECT
 @dp.message(Form.selecting_file)
