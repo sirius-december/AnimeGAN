@@ -6,7 +6,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
-from telegram.database.constants import DEFAULT_VID_CNT, DEFAULT_IMAGE_CNT
+from .constants import DEFAULT_VID_CNT, DEFAULT_IMAGE_CNT
 
 
 class Base(DeclarativeBase):

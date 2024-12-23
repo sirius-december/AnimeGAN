@@ -20,6 +20,7 @@ tritonclient = {extras = ["http"], version = "^2.52.0"}
 pyjwt = "^2.10.1"
 cryptography = "^44.0.0"
 av = "^14.0.1"
+requests = "^2.32.3"
 
 
 [tool.poetry.group.dev.dependencies]

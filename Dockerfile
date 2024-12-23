@@ -7,6 +7,8 @@ RUN apt update && apt upgrade -y && apt install -y curl
 RUN curl -sSL https://install.python-poetry.org | python -
 ENV PATH="/root/.local/bin:${PATH}"
 
+RUN apt install -y python3-opencv
+
 WORKDIR /app
 COPY poetry.lock pyproject.toml /app/
 
