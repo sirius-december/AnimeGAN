@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = 'users'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(sqlalchemy.sql.sqltypes.BIGINT, primary_key=True)
     videos_left: Mapped[int] = mapped_column(nullable=False, default=DEFAULT_VID_CNT)
     photos_left: Mapped[int] = mapped_column(nullable=False, default=DEFAULT_IMAGE_CNT)
 
